@@ -1,0 +1,15 @@
+C:\Users\Luke\rogue-pyra\RoguePyra\bin\Debug\net8.0\RoguePyra.exe
+C:\Users\Luke\rogue-pyra\RoguePyra\bin\Debug\net8.0\RoguePyra.deps.json
+C:\Users\Luke\rogue-pyra\RoguePyra\bin\Debug\net8.0\RoguePyra.runtimeconfig.json
+C:\Users\Luke\rogue-pyra\RoguePyra\bin\Debug\net8.0\RoguePyra.dll
+C:\Users\Luke\rogue-pyra\RoguePyra\bin\Debug\net8.0\RoguePyra.pdb
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\RoguePyra.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\RoguePyra.AssemblyInfoInputs.cache
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\RoguePyra.AssemblyInfo.cs
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\RoguePyra.csproj.CoreCompileInputs.cache
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\RoguePyra.sourcelink.json
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\RoguePyra.dll
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\refint\RoguePyra.dll
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\RoguePyra.pdb
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\RoguePyra.genruntimeconfig.cache
+C:\Users\Luke\rogue-pyra\RoguePyra\obj\Debug\net8.0\ref\RoguePyra.dll
