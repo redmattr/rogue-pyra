@@ -29,22 +29,25 @@ dotnet build
 ```
 
 
-## Start the main TCP server
-dotnet run -- --server --ip 0.0.0.0 --port 5000
+## Start the main TCP server (chat + lobby registry)
+dotnet run -- --server --bind 0.0.0.0 --tcpport 5000
 
-## Start a TCP client (chat + lobby control)
-dotnet run -- --client --host 127.0.0.1 --port 5000 --name HostDude
+## Start a TCP client (chat + lobby commands)
+dotnet run -- --clientcli --name Alice --hostip 127.0.0.1 --tcpport 5000
 
-Register a lobby (assumes your UDP host will be on port 6000):
-/hostreg MyLobby 6000 6
+## In the TCP console client:
+/hostreg MyLobby 6000 8
+/hosts
+/join <id>
+/msg Hello everyone!
 
-## Start the UDP host (game authority)
-dotnet run -- --hostgame --udpport 6000
+## Start the UDP host (authoritative game loop)
+dotnet run -- --host --udpport 6000
 
-## Start a UDP client with a window
-dotnet run -- --clientviz --host 127.0.0.1 --udpport 6000
+## Start a visual client window
+dotnet run -- --clientviz --udpport 6000
 
-Use **W/A/S/D** to move the blue box.  
+Use **W/A/S/D** to move the box.  
 The host logs `INPUT` packets, and sends back `SNAPSHOT` packets → the client updates.
 
 ---
