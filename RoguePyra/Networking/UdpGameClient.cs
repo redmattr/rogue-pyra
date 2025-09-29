@@ -37,14 +37,14 @@ namespace RoguePyra.Networking;
 public sealed class UdpGameClient
 {
     // ------------ Public state read by the UI/renderer ------------
-    ///  Latest lava surface Y (0 = 
+    ///  Latest lava surface Y
     public float LavaY { get; private set; } = 450f;
 
-    ///  Winner id when a WIN packet is received; null other
+    ///  Winner id when a WIN packet is received; null otherwise
     public string? WinnerId { get; private set; }
 
     /// Snapshot of entities keyed by player id.
-    /// Tuple = (x, y, hp). Feel free to wrap this later if you prefer a struct.
+    /// Tuple = (x, y, hp)
     public readonly Dictionary<string, (float x, float y, int hp)> Entities = new();
 
     // ------------ Networking ------------
@@ -96,8 +96,8 @@ public sealed class UdpGameClient
         _keys = m;
     }
 
-    /// If you prefer setting a precomputed mask directly.
-    public void SetKeysMask(Protocol.KeysMask mask) => _keys = mask;
+    /// If we want to use precomputed mask settings directly.
+    //public void SetKeysMask(Protocol.KeysMask mask) => _keys = mask;
 
     private async Task SendInputsLoop(CancellationToken ct)
     {

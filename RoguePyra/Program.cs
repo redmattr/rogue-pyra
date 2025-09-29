@@ -28,7 +28,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using RoguePyra.Networking; // TcpMainServer, TcpClientApp, UdpGameHost, UdpGameClient
-using RoguePyra.UI;         // GameForm
+using RoguePyra.UI;         // GameForm, LobbyForm, TcpClientForm
 
 namespace RoguePyra
 {

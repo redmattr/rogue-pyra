@@ -12,7 +12,7 @@
 //
 // Tip
 // If you ever change a message format here, BOTH sides (host and client)
-// should rebuild; tests/console tools can reuse the builder/parsers below.
+// need to be rebuilt; tests/console tools can reuse the builder/parsers below.
 // -----------------------------------------------------------------------------
 
 using System;
