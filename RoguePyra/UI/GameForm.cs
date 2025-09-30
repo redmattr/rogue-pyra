@@ -8,7 +8,7 @@
 //   - Renders players, HP, and rising lava from client snapshots
 //   - Shows a "WINNER" banner when the host declares a winner
 //
-// 🧩 Notes
+// Notes
 // - Keep networking out of the UI as much as possible; this form only "reads"
 //   the public state exposed by UdpGameClient and calls SetKeys on key events.
 // - Double-buffering is enabled to avoid flicker.
