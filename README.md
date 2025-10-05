@@ -28,7 +28,6 @@ dotnet clean
 dotnet build
 ```
 
-
 ## Start the main TCP server (chat + lobby registry)
 dotnet run -- --server --bind 0.0.0.0 --tcpport 5000
 

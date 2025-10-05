@@ -16,6 +16,7 @@
 // -----------------------------------------------------------------------------
 
 using System;
+using System.Net;
 using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,7 +46,7 @@ namespace RoguePyra.UI
 
         private readonly Label _status;
 
-        public GameForm(string hostIp, int udpPort = Protocol.DefaultUdpPort)
+        public GameForm(IPAddress hostIp, int udpPort = Protocol.DefaultUdpPort)
         {
             Text = "RoguePyra — Client";
             ClientSize = new Size((int)WorldW, (int)WorldH);
