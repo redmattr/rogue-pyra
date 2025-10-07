@@ -1,25 +1,27 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Luke\\rogue-pyra\\RoguePyra\\RoguePyra.csproj": {}
+    "C:\\Users\\Matt\\Source\\Repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Luke\\rogue-pyra\\RoguePyra\\RoguePyra.csproj": {
+    "C:\\Users\\Matt\\Source\\Repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Luke\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
+        "projectUniqueName": "C:\\Users\\Matt\\Source\\Repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
         "projectName": "RoguePyra",
-        "projectPath": "C:\\Users\\Luke\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
-        "packagesPath": "C:\\Users\\Luke\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Luke\\rogue-pyra\\RoguePyra\\obj\\",
+        "projectPath": "C:\\Users\\Matt\\Source\\Repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
+        "packagesPath": "C:\\Users\\Matt\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Matt\\Source\\Repos\\rogue-pyra\\RoguePyra\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
+          "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
         ],
         "configFilePaths": [
-          "C:\\Users\\Luke\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Matt\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0-windows"
@@ -44,7 +46,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0-windows7.0": {
@@ -68,7 +71,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
