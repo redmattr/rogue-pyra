@@ -7,12 +7,22 @@ using System.Threading.Tasks;
 
 namespace RoguePyra.Physics
 {
+    public sealed interface CollisionObj
+    {
+        protected Transforms Transform { get; set; }
+        protected CollideHelper Collision { get; set; }
+        protected bool _IsTriggerObj { get; set; }
+        protected bool _IsDynamicObj;
+
+
+    }
+
     public struct PointCollisions
     {
-        Vector2 PointA;
-        Vector2 PointB;
-        Vector2 Normal;
-        float Depth;
+        public Vector2 PointA { get; set; }
+        public Vector2 PointB { get; set; }
+        public Vector2 Normal { get; set; }
+        private float Depth;
         public bool IsColliding;
     }
 
