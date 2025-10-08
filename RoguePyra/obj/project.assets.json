@@ -8,23 +8,24 @@
     "net8.0-windows7.0": []
   },
   "packageFolders": {
-    "C:\\Users\\BoomDaddy\\.nuget\\packages\\": {},
+    "C:\\Users\\Luke\\.nuget\\packages": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\BoomDaddy\\source\\repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
+      "projectUniqueName": "C:\\Users\\Luke\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
       "projectName": "RoguePyra",
-      "projectPath": "C:\\Users\\BoomDaddy\\source\\repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
-      "packagesPath": "C:\\Users\\BoomDaddy\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\BoomDaddy\\source\\repos\\rogue-pyra\\RoguePyra\\obj\\",
+      "projectPath": "C:\\Users\\Luke\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
+      "packagesPath": "C:\\Users\\Luke\\.nuget\\packages",
+      "outputPath": "C:\\Users\\Luke\\rogue-pyra\\RoguePyra\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\BoomDaddy\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Luke\\rogue-pyra\\RoguePyra\\NuGet.Config",
+        "C:\\Users\\Luke\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -50,8 +51,7 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      },
-      "SdkAnalysisLevel": "9.0.100"
+      }
     },
     "frameworks": {
       "net8.0-windows7.0": {
@@ -75,7 +75,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.101/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

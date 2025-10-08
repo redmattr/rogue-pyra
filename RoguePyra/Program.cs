@@ -1,46 +1,38 @@
-// -----------------------------------------------------------------------------
-// Program.cs  (place in project root)
-// -----------------------------------------------------------------------------
-// Purpose
-// Single entry point that launches one of four modes based on command-line args:
-//   1) --server      → TCP lobby/chat server. Connects clients to waiting hosts.
-//   2) --host        → Authoritative UDP game host (simulation/broadcast).
-//   3) --clientcli   → Console TCP client (chat + lobby commands).
-//   4) --clientviz   → WinForms client that visualizes the game state via UDP.
+// Program.cs
+// Entry point for RoguePyra. Chooses a mode based on command-line args.
 //
-// Examples
-//   dotnet run -- --server --bind 0.0.0.0 --tcpport 5000
-//   dotnet run -- --host --udpport 6000
-//   dotnet run -- --clientcli --name Alice --host 127.0.0.1 --tcpport 5000
-//   dotnet run -- --clientviz --host 127.0.0.1 --udpport 6000
+// Modes:
+//   --server      → TCP lobby/chat server. Connects clients to waiting hosts.
+//   --host        → Authoritative UDP game host.
+//   --clientcli   → Console TCP client (chat + lobby commands).
+//   --clientviz   → WinForms client (launches MainMenuForm → HostList → GameForm).
 //
-// Notes
-// - No external parsing library to keep it simple.
-// - Ctrl+C cleanly cancels async loops (server/host/clientcli).
-// - WinForms requires [STAThread]. We only initialize WinForms for --clientviz.
-// -----------------------------------------------------------------------------
+// Common flags:
+//   --bind <ip>       (server bind IP, default 0.0.0.0)
+//   --tcpport <p>     (TCP port, default Protocol.DefaultTcpPort)
+//   --udpport <p>     (UDP port, default Protocol.DefaultUdpPort)
+//   --name <n>        (player name for clientcli)
+//   --hostip <ip>     (server IP for clientcli; menu reads this from UI)
 
 using System;
 using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-
+using RoguePyra.UI;
 using RoguePyra.Networking; // TcpMainServer, UdpGameHost, TcpClientApp, UdpGameClient
 using RoguePyra.UI;         // GameForm
+
 
 namespace RoguePyra
 {
 	internal static class Program
-    {
 		enum ProgramMode { notSet, server, host, clientCLI, clientViz } // Possible program modes.
 
         // We only need STAThread when launching WinForms (clientviz),
         // but it doesn't hurt to have it here for the whole program.
         [STAThread]
         private static async Task Main(string[] args)
-        {
 			// Determine program mode to run in.
 			ProgramMode programMode = ProgramMode.notSet;
 			if (args.Contains("--server", StringComparer.OrdinalIgnoreCase)) programMode = ProgramMode.server;
@@ -56,7 +48,7 @@ namespace RoguePyra
 				if (programMode == ProgramMode.notSet) programMode = ProgramMode.clientViz;
 				else { PrintHelp("Error: multiple program modes specified."); return; }
 			}
-
+            }
 			// Determine other options with default values.
 			IPAddress bindIP    = IPAddress.Parse(GetArg(args, "--bind") ?? "0.0.0.0");
             IPAddress hostIP    = IPAddress.Parse(GetArg(args, "--host") ?? "127.0.0.1");
@@ -70,7 +62,7 @@ namespace RoguePyra
 				e.Cancel = true;
 				try { cts.Cancel(); } catch { }
 			};
-
+            };
 			switch (programMode) {
 				case ProgramMode.server:
 					await RunServerAsync(bindIP, tcpPort, cts.Token);
@@ -91,20 +83,17 @@ namespace RoguePyra
 					PrintHelp("Unknown logic error. This code should be unreachable, please notify the developers.");
 					return;
 			}
+            }
         }
-
-        // -----------------------------------------------------------------------------
-        // Mode launchers
-        // -----------------------------------------------------------------------------
+        // --- Mode runners ------------------------------------------------------
 
         private static async Task RunServerAsync(IPAddress ip, int tcpPort, CancellationToken ct)
-        {
             TcpMainServer server = new(ip, tcpPort);
             Console.WriteLine($"[MAIN] Starting TCP server on {ip}:{tcpPort}  (Ctrl+C to stop)");
+            Console.WriteLine($"[ENTRY] Starting TCP server on {bindIp}:{tcpPort}  (Ctrl+C to stop)");
             await server.RunAsync(ct);
             Console.WriteLine("[MAIN] TCP server stopped.");
         }
-
 		private static async Task RunUdpHostAsync(int udpPort, CancellationToken ct)
 		{
 			UdpGameHost host = new(udpPort);
@@ -112,28 +101,28 @@ namespace RoguePyra
 			await host.RunAsync(ct);
 			Console.WriteLine("[MAIN] UDP host stopped.");
 		}
+        }
 
 		private static async Task RunClientCLIAsync(string name, IPAddress hostIp, int tcpPort, CancellationToken ct)
-        {
             TcpClientApp client = new(name, hostIp.ToString(), tcpPort);
             Console.WriteLine($"[MAIN] Starting TCP console client to {hostIp}:{tcpPort} as '{name}'  (type /quit to exit)");
             await client.RunAsync(ct);
             Console.WriteLine("[MAIN] TCP console client stopped.");
+            Console.WriteLine("[ENTRY] UDP host stopped.");
         }
-
-        // WinForms visualizer entry
-        private static void RunClientVisualizer(IPAddress hostIp, int udpPort)
-        {
+        // WinForms entry: show the main menu → host list → game form
+        private static void RunClientVisualizer()
+        private static void RunClientVisualizer(string hostIp, int udpPort)
             Console.WriteLine($"[MAIN] Launching WinForms visualizer → {hostIp}:{udpPort}");
+            Console.WriteLine($"[ENTRY] Launching WinForms visualizer → {hostIp}:{udpPort}");
             Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new GameForm(hostIp, udpPort));
-            Console.WriteLine("[MAIN] Visualizer closed.");
+            Application.Run(new MainMenuForm());
+			Console.WriteLine("[MAIN] Client closed.");
         }
+        // --- Helpers -----------------------------------------------------------
 
-        // -----------------------------------------------------------------------------
-        // Helpers (arg parsing + help)
-        // -----------------------------------------------------------------------------
+        private static bool HasFlag(string[] args, string name)
+            => args.Any(a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase));
 
 		// Returns the value after the specified argument, or null if not found.
 		private static string? GetArg(string[] args, string name)
@@ -155,16 +144,16 @@ namespace RoguePyra
         {
 			if (message != null) Console.WriteLine(message + '\n');
             Console.WriteLine("RoguePyra — modes:");
-            Console.WriteLine("  --server      [--bind <ip>] [--tcpport <p>]");
+			Console.WriteLine("  --server      [--bind <ip>] [--tcpport <p>]");
 			Console.WriteLine("  --host        [--udpport <p>]");
 			Console.WriteLine("  --clientcli   --name <n> --host <ip> [--tcpport <p>]");
-            Console.WriteLine("  --clientviz   --host <ip> [--udpport <p>]");
-            Console.WriteLine();
+			Console.WriteLine("  --clientviz   (launches WinForms menu)");
+			Console.WriteLine();
             Console.WriteLine("Examples:");
-            Console.WriteLine("  dotnet run -- --server --bind 0.0.0.0 --tcpport 5000");
+			Console.WriteLine("  dotnet run -- --server --bind 0.0.0.0 --tcpport 5000");
 			Console.WriteLine("  dotnet run -- --host --udpport 6000");
-			Console.WriteLine("  dotnet run -- --clientcli --name Alice --host 127.0.0.1 --tcpport 5000");
-            Console.WriteLine("  dotnet run -- --clientviz --host 127.0.0.1 --udpport 6000");
+			Console.WriteLine("  dotnet run -- --clientcli --name Alice --hostip 127.0.0.1 --tcpport 5000");
+            Console.WriteLine("  dotnet run -- --clientviz");
         }
     }
 }

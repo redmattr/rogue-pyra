@@ -31,24 +31,27 @@ dotnet build
 ## Start the main TCP server (chat + lobby registry)
 dotnet run -- --server --bind 0.0.0.0 --tcpport 5000
 
-## Start a TCP client (chat + lobby commands)
-dotnet run -- --clientcli --name Alice --hostip 127.0.0.1 --tcpport 5000
-
-## In the TCP console client:
-/hostreg MyLobby 6000 8
-/hosts
-/join <id>
-/msg Hello everyone!
-
-## Start the UDP host (authoritative game loop)
+## Start the UDP Game Host (game simulation)
 dotnet run -- --host --udpport 6000
 
 ## Start a visual client window
-dotnet run -- --clientviz --udpport 6000
+dotnet run -- --clientviz
 
-Use **W/A/S/D** to move the box.  
+# Then in the Host List Window:
+Then in the Host List window:
+Server IP: <LAN_IP> of the host machine (e.g. 192.168.1.105)
+TCP Port: 5000
+Click Connect
+Click Refresh
+Select your lobby and click Join Selected
+
+  
 The host logs `INPUT` packets, and sends back `SNAPSHOT` packets → the client updates.
 
+# Controls
+Use **W/A/S/D** to move the box.
+Chat Box — Type message + Enter to send
+Esc / X — Close game
 ---
 
 ## Features
