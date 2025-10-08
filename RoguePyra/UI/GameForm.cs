@@ -3,6 +3,7 @@
 // Now includes an in-game chat panel (TCP) while rendering gameplay (UDP).
 
 using System;
+using System.Net;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
@@ -46,7 +47,7 @@ namespace RoguePyra.UI
         // Constructor now receives:
         // - hostIp + udpPort: from JOIN_INFO
         // - net: existing NetworkManager that is ALREADY connected to TCP
-        public GameForm(string hostIp, int udpPort, NetworkManager net)
+        public GameForm(IPAddress hostIp, int udpPort, NetworkManager net)
         {
             _net = net ?? throw new ArgumentNullException(nameof(net));
 
