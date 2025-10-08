@@ -19,20 +19,22 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using RoguePyra.UI;
+using System.Windows.Forms;
+
 using RoguePyra.Networking; // TcpMainServer, UdpGameHost, TcpClientApp, UdpGameClient
 using RoguePyra.UI;         // GameForm
-
 
 namespace RoguePyra
 {
 	internal static class Program
+	{
 		enum ProgramMode { notSet, server, host, clientCLI, clientViz } // Possible program modes.
 
         // We only need STAThread when launching WinForms (clientviz),
         // but it doesn't hurt to have it here for the whole program.
         [STAThread]
         private static async Task Main(string[] args)
+		{
 			// Determine program mode to run in.
 			ProgramMode programMode = ProgramMode.notSet;
 			if (args.Contains("--server", StringComparer.OrdinalIgnoreCase)) programMode = ProgramMode.server;
@@ -48,7 +50,7 @@ namespace RoguePyra
 				if (programMode == ProgramMode.notSet) programMode = ProgramMode.clientViz;
 				else { PrintHelp("Error: multiple program modes specified."); return; }
 			}
-            }
+            
 			// Determine other options with default values.
 			IPAddress bindIP    = IPAddress.Parse(GetArg(args, "--bind") ?? "0.0.0.0");
             IPAddress hostIP    = IPAddress.Parse(GetArg(args, "--host") ?? "127.0.0.1");
@@ -62,7 +64,7 @@ namespace RoguePyra
 				e.Cancel = true;
 				try { cts.Cancel(); } catch { }
 			};
-            };
+
 			switch (programMode) {
 				case ProgramMode.server:
 					await RunServerAsync(bindIP, tcpPort, cts.Token);
@@ -74,7 +76,7 @@ namespace RoguePyra
 					await RunClientCLIAsync(playerName, hostIP, tcpPort, cts.Token);
 					return;
 				case ProgramMode.clientViz:
-					RunClientVisualizer(hostIP, udpPort);
+					RunClientVisualizer();
 					return;
 				case ProgramMode.notSet: // If no mode specified, show help and exit.
 					PrintHelp("Error: no program mode was specified.");
@@ -83,17 +85,18 @@ namespace RoguePyra
 					PrintHelp("Unknown logic error. This code should be unreachable, please notify the developers.");
 					return;
 			}
-            }
         }
+
         // --- Mode runners ------------------------------------------------------
 
         private static async Task RunServerAsync(IPAddress ip, int tcpPort, CancellationToken ct)
+		{
             TcpMainServer server = new(ip, tcpPort);
             Console.WriteLine($"[MAIN] Starting TCP server on {ip}:{tcpPort}  (Ctrl+C to stop)");
-            Console.WriteLine($"[ENTRY] Starting TCP server on {bindIp}:{tcpPort}  (Ctrl+C to stop)");
             await server.RunAsync(ct);
             Console.WriteLine("[MAIN] TCP server stopped.");
         }
+
 		private static async Task RunUdpHostAsync(int udpPort, CancellationToken ct)
 		{
 			UdpGameHost host = new(udpPort);
@@ -101,24 +104,24 @@ namespace RoguePyra
 			await host.RunAsync(ct);
 			Console.WriteLine("[MAIN] UDP host stopped.");
 		}
-        }
 
 		private static async Task RunClientCLIAsync(string name, IPAddress hostIp, int tcpPort, CancellationToken ct)
+		{
             TcpClientApp client = new(name, hostIp.ToString(), tcpPort);
             Console.WriteLine($"[MAIN] Starting TCP console client to {hostIp}:{tcpPort} as '{name}'  (type /quit to exit)");
             await client.RunAsync(ct);
             Console.WriteLine("[MAIN] TCP console client stopped.");
-            Console.WriteLine("[ENTRY] UDP host stopped.");
         }
+
         // WinForms entry: show the main menu → host list → game form
         private static void RunClientVisualizer()
-        private static void RunClientVisualizer(string hostIp, int udpPort)
-            Console.WriteLine($"[MAIN] Launching WinForms visualizer → {hostIp}:{udpPort}");
-            Console.WriteLine($"[ENTRY] Launching WinForms visualizer → {hostIp}:{udpPort}");
+		{
+            Console.WriteLine($"[MAIN] Launching main form.");
             Application.EnableVisualStyles();
             Application.Run(new MainMenuForm());
 			Console.WriteLine("[MAIN] Client closed.");
         }
+
         // --- Helpers -----------------------------------------------------------
 
         private static bool HasFlag(string[] args, string name)
