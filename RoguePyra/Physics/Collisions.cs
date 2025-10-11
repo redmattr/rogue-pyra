@@ -4,16 +4,16 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using RoguePyra.Entity;
 
 namespace RoguePyra.Physics
 {
-    public sealed interface CollisionObj
+    public class CollisionObj
     {
         protected Transforms Transform { get; set; }
         protected CollideHelper Collision { get; set; }
-        protected bool _IsTriggerObj { get; set; }
-        protected bool _IsDynamicObj;
-
+        protected bool IsTriggerObj { get; set; }
+        protected bool IsDynamicObj;
 
     }
 
@@ -28,8 +28,8 @@ namespace RoguePyra.Physics
 
     public struct Collisions
     {
-        Entities ob1;
-        Entities ob2;
+        EntityPhysical ob1;
+        EntityPhysical ob2;
         PointCollisions points;
     }
 

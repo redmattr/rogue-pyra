@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RoguePyra")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+87cec10ee2166a8fc57f98e47455d08f33d6239c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ebdcfe1a071f7a7d043526a7bd0cd1b759f0cfdd")]
 [assembly: System.Reflection.AssemblyProductAttribute("RoguePyra")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RoguePyra")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

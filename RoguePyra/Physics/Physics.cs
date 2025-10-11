@@ -14,10 +14,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
+using RoguePyra.Entity;
 
 namespace RoguePyra.Physics
 {
     //Placeholder class for entity
+    /*
    public class Entities : CollisionObj
     {
         public Vector2 Position { get; set; } //Getter|Setter for entity position
@@ -32,11 +34,12 @@ namespace RoguePyra.Physics
 
         public float Elasticity { get; set; } //Bounciness (when colliding)
     }
+    */
 
     public sealed class Physics
     {
         //List that holds all entity objects
-        private List<Entities> entObj;
+        private List<EntityPhysical> entObj;
         //Vector definition for gravity
         private Vector2 _grav = new Vector2(0, -9.81f);
 
@@ -57,9 +60,9 @@ namespace RoguePyra.Physics
         {
             List<Collisions> collisions = new List<Collisions>();
 
-            foreach (Entities obj in entObj)
+            foreach (EntityPhysical obj in entObj)
             {
-                foreach (Entities obj2 in entObj)
+                foreach (EntityPhysical obj2 in entObj)
                 {
                     if (obj == obj2)
                     {
@@ -75,7 +78,7 @@ namespace RoguePyra.Physics
 
                     if (Point.IsColliding)
                     {
-                        collisions;
+                        collisions();
                     }
                 }
             }
@@ -88,24 +91,24 @@ namespace RoguePyra.Physics
                 if (!ent._IsGrav) continue;
 
                 // F = m * a
-                obj.Force += obj.mass * _grav;
+                ent.Force += ent.mass * _grav;
 
                 // V = V0 + F / m * t
                 // X = X0 + v * t
-                obj.Velocity += obj.Force / obj.mass * t;
-                obj.Position += obj.Velocity * t;
+                ent.Velocity += ent.Force / ent.mass * t;
+                ent.Position += ent.Velocity * t;
 
                 //Reset net force
-                obj.Force = new Vector2(0, 0);
+                ent.Force = new Vector2(0, 0);
             }
         }
 
-        public void AddEntity(Entities obj)
+        public void AddEntity(EntityPhysical obj)
         {
             entObj.Add(obj);
         }
         
-        public void RemoveEntity(Entities obj)
+        public void RemoveEntity(EntityPhysical obj)
         {
             entObj.Remove(obj);
         }
