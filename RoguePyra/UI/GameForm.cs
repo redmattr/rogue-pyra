@@ -8,6 +8,7 @@ using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
 using RoguePyra.Networking;
+using System.Collections.Generic;
 
 // Avoid ambiguity with System.Threading.Timer
 using WinFormsTimer = System.Windows.Forms.Timer;

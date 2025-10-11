@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 using RoguePyra.Networking;
+using System.Net;
 
 namespace RoguePyra.UI
 {
@@ -182,7 +183,7 @@ namespace RoguePyra.UI
                             return;
                         }
 
-                        var gf = new GameForm(ip, udpPort, _net); // pass existing NetworkManager
+                        var gf = new GameForm(IPAddress.Parse(ip), udpPort, _net); // pass existing NetworkManager
                         _netOwned = false;                        // GameForm now uses it; don't dispose here
                         gf.Show();
                     }
