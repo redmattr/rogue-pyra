@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -47,7 +48,7 @@ namespace RoguePyra.Networking
         }
 
         /// Connect only to the UDP host for gameplay. Keeps the loops running.
-        public Task ConnectUdpAsync(string udpHost, int udpPort, CancellationToken external = default)
+        public Task ConnectUdpAsync(IPAddress udpHost, int udpPort, CancellationToken external = default)
         {
             _cts ??= CancellationTokenSource.CreateLinkedTokenSource(external);
 
@@ -65,7 +66,7 @@ namespace RoguePyra.Networking
         }
 
         /// Convenience: connect to both at once (TCP then UDP).
-        public async Task ConnectAllAsync(string playerName, string tcpHost, int tcpPort, string udpHost, int udpPort, CancellationToken external = default)
+        public async Task ConnectAllAsync(string playerName, string tcpHost, int tcpPort, IPAddress udpHost, int udpPort, CancellationToken external = default)
         {
             await ConnectTcpAsync(playerName, tcpHost, tcpPort, external);
             await ConnectUdpAsync(udpHost, udpPort, external);

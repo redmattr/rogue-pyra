@@ -63,12 +63,12 @@ public sealed class UdpGameClient
     /// Fired when a WIN packet is rec
     public event Action<string>? WinnerAnnounced;
 
-    public UdpGameClient(string hostIp, int udpPort = Protocol.DefaultUdpPort)
+    public UdpGameClient(IPAddress hostIp, int udpPort = Protocol.DefaultUdpPort)
     {
         _udp = new UdpClient(0); // bind to ephemeral local port
         _udp.Client.ReceiveTimeout = 0;
 
-        _hostEp = new IPEndPoint(IPAddress.Parse(hostIp), udpPort);
+        _hostEp = new IPEndPoint(hostIp, udpPort);
         Console.WriteLine($"[CliUDP] Local {((IPEndPoint)_udp.Client.LocalEndPoint!).ToString()} → Host {_hostEp}");
     }
 
