@@ -39,67 +39,123 @@ namespace RoguePyra.Physics
     public sealed class Physics
     {
         //List that holds all entity objects
-        private List<EntityPhysical> entObj;
+        private List<EntityPhysical> entObj = new List<EntityPhysical>();
         //Vector definition for gravity
-        private Vector2 _grav = new Vector2(0, -9.81f);
+        private Vector2 _grav = new Vector2(0, 9.81f);
+        private int SubSteps { get; set; } = 2;
+        private float Time { get; set; } = 0f;
+        private float Frame = 0f;
 
         //Take step in physics renderer
-        public void PhyStep(float t)
+        public void PhyStep()
         {
-            AddGrav(t);
-            CalcCollisions(t);
-            MoveEntities(t);
+            Time += Frame;
+            float GetStep = GetStepDt();
+            for (int i = 0; i < SubSteps; i++)
+            {
+                AddGrav();
+                CalcCollisions(GetStep);
+                UpdateObjects(GetStep);
+            }
         }
 
-        private void MoveEntities(float t)
+        private void CalcCollisions(float dt)
         {
-            
-        }
+            //List<Collisions> collisions = new List<Collisions>();
 
-        private void CalcCollisions(float t)
-        {
-            List<Collisions> collisions = new List<Collisions>();
-
+            float response = 0.75f;
+            int count = GetObjectCount(entObj);
+            /*
             foreach (EntityPhysical obj in entObj)
             {
                 foreach (EntityPhysical obj2 in entObj)
                 {
-                    if (obj == obj2)
+                    if (obj == obj2) continue;
+
+                    if (EntityPhysical.Shape.CIRCLE == obj.EntityShape && EntityPhysical.Shape.CIRCLE == obj2.EntityShape)
                     {
-                        break;
+                        Vector2 vec = obj.Position - obj2.Position;
+
+                        float dist2 = (vec.X * vec.X) + (vec.Y * vec.Y);
+                        Console.WriteLine("Dist2 " + dist2);
+                        float minDist = obj.radius + obj2.radius;
+                        Console.WriteLine("Mind " + minDist);
+
+                        if (dist2 < (minDist * minDist))
+                        {
+                            float dist = (float)Math.Sqrt(dist2);
+                            Console.WriteLine("Dist " + dist);
+                            Vector2 a = vec / dist;
+                            Console.WriteLine("VecA " + a);
+                            float ratio1 = obj.radius / (obj.radius + obj2.radius);
+                            float ratio2 = obj2.radius / (obj.radius + obj2.radius);
+                            float delta = 0.5f * response * (dist - minDist);
+
+                            obj.Position -= a * (ratio2 * delta);
+                            obj2.Position += a * (ratio1 * delta);
+                        }
                     }
-
-                    if (!obj.Collide || !obj2.Collide)
+                    else
                     {
-                        continue;
+                        //TODO
                     }
+                }
+            }
+            */
+            for (int i = 0; i < count; i++)
+            {
+                EntityPhysical obj = entObj[i];
+                for (int k = i+1; k < count; k++)
+                {
+                    EntityPhysical obj2 = entObj[k];
+                    if (obj == obj2) continue;
 
-                    PointCollisions Point = CollisionTest(obj.Collide, obj.Transform, obj2.Collide, obj2.Transform);
-
-                    if (Point.IsColliding)
+                    if (EntityPhysical.Shape.CIRCLE == obj.EntityShape && EntityPhysical.Shape.CIRCLE == obj2.EntityShape)
                     {
-                        collisions();
+                        Vector2 vec = obj.Position - obj2.Position;
+
+                        float dist2 = (vec.X * vec.X) + (vec.Y * vec.Y);
+                        //Console.WriteLine("Dist2 " + dist2);
+                        float minDist = obj.radius + obj2.radius;
+                        //Console.WriteLine("Mind " + minDist);
+
+                        if (dist2 < (minDist * minDist))
+                        {
+                            float dist = (float)Math.Sqrt(dist2);
+                            //Console.WriteLine("Dist " + dist);
+                            Vector2 a = vec / dist;
+                            //Console.WriteLine("VecA " + a);
+                            float ratio1 = obj.radius / (obj.radius + obj2.radius);
+                            float ratio2 = obj2.radius / (obj.radius + obj2.radius);
+                            float delta = 0.5f * response * (dist - minDist);
+
+                            obj.Position -= a * (ratio2 * delta);
+                            obj2.Position += a * (ratio1 * delta);
+                        }
+                    }
+                    else
+                    {
+                        //TODO
                     }
                 }
             }
         }
 
-        private void AddGrav(float t)
+        private void AddGrav()
         {
             foreach (var ent in entObj)
             {
                 if (!ent._IsGrav) continue;
 
-                // F = m * a
-                ent.Force += ent.mass * _grav;
+                ent.Accelerate(_grav);
+            }
+        }
 
-                // V = V0 + F / m * t
-                // X = X0 + v * t
-                ent.Velocity += ent.Force / ent.mass * t;
-                ent.Position += ent.Velocity * t;
-
-                //Reset net force
-                ent.Force = new Vector2(0, 0);
+        private void UpdateObjects(float dt)
+        {
+            foreach (var ent in entObj)
+            {
+                ent.Update(dt);
             }
         }
 
@@ -113,5 +169,40 @@ namespace RoguePyra.Physics
             entObj.Remove(obj);
         }
 
+        public List<EntityPhysical> GetEntities()
+        {
+            return entObj;
+        }
+
+        public void SetSimRate(float simRate)
+        {
+            Frame = 1f / simRate;
+        }
+
+        public void SetSubSteps(int subSteps)
+        {
+            if (subSteps < 1)
+            {
+                subSteps = 1;
+                return;
+            }
+
+            SubSteps = subSteps;
+        }
+
+        public void SetObjVelocity(EntityPhysical entObj, Vector2 a)
+        {
+            entObj.SetVelocity(a, GetStepDt());
+        }
+
+        public int GetObjectCount(List<EntityPhysical> entObj)
+        {
+            return entObj.Count;
+        }
+
+        public float GetStepDt()
+        {
+            return Frame / (float)SubSteps;
+        }
     }   
 }
