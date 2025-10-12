@@ -39,6 +39,9 @@ namespace RoguePyra
         [STAThread]
         private static void Main(string[] args)
         {
+            //Test Development Switch
+            bool isPhysBox =   args.Contains("--devbox",    StringComparer.OrdinalIgnoreCase);
+
             // Quick switches
             bool isServer    = args.Contains("--server",    StringComparer.OrdinalIgnoreCase);
             bool isClientCli = args.Contains("--clientcli", StringComparer.OrdinalIgnoreCase);
@@ -53,7 +56,7 @@ namespace RoguePyra
             string name     = GetArg(args, "--name")    ?? $"Player{Random.Shared.Next(1000, 9999)}";
 
             // If no mode specified, show help and exit.
-            if (!isServer && !isClientCli && !isHost && !isClientViz)
+            if (!isServer && !isClientCli && !isHost && !isClientViz && !isPhysBox)
             {
                 PrintHelp();
                 return;
@@ -66,6 +69,11 @@ namespace RoguePyra
                 e.Cancel = true;
                 try { cts.Cancel(); } catch { }
             };
+
+            if (isPhysBox)
+            {
+                RunDevBox();
+            }
 
             if (isServer)
             {
@@ -129,6 +137,15 @@ namespace RoguePyra
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new GameForm(hostIp, udpPort));
             Console.WriteLine("[ENTRY] Visualizer closed.");
+        }
+
+        private static void RunDevBox()
+        {
+            Console.WriteLine($"[ENTRY] Starting Physics Box...");
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new RoguePyra.Physics.PhysicsBox());
+            Console.WriteLine($"[ENTRY] Physics Box Stopped.");
         }
 
         // -----------------------------------------------------------------------------
