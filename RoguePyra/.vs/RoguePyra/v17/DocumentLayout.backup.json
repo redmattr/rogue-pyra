@@ -1,7 +1,24 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{848DDCE7-6C78-52E4-B5F9-625D1D63F706}|RoguePyra.csproj|c:\\users\\matt\\source\\repos\\rogue-pyra\\roguepyra\\physics\\physics.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{848DDCE7-6C78-52E4-B5F9-625D1D63F706}|RoguePyra.csproj|solutionrelative:physics\\physics.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{848DDCE7-6C78-52E4-B5F9-625D1D63F706}|RoguePyra.csproj|c:\\users\\matt\\source\\repos\\rogue-pyra\\roguepyra\\physics\\collisions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{848DDCE7-6C78-52E4-B5F9-625D1D63F706}|RoguePyra.csproj|solutionrelative:physics\\collisions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{848DDCE7-6C78-52E4-B5F9-625D1D63F706}|RoguePyra.csproj|c:\\users\\matt\\source\\repos\\rogue-pyra\\roguepyra\\ui\\gameform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{848DDCE7-6C78-52E4-B5F9-625D1D63F706}|RoguePyra.csproj|solutionrelative:ui\\gameform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{848DDCE7-6C78-52E4-B5F9-625D1D63F706}|RoguePyra.csproj|c:\\users\\matt\\source\\repos\\rogue-pyra\\roguepyra\\physics\\transforms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{848DDCE7-6C78-52E4-B5F9-625D1D63F706}|RoguePyra.csproj|solutionrelative:physics\\transforms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,15 +26,63 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Transforms.cs",
+              "DocumentMoniker": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\Physics\\Transforms.cs",
+              "RelativeDocumentMoniker": "Physics\\Transforms.cs",
+              "ToolTip": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\Physics\\Transforms.cs",
+              "RelativeToolTip": "Physics\\Transforms.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-06T21:11:05.958Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Collisions.cs",
+              "DocumentMoniker": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\Physics\\Collisions.cs",
+              "RelativeDocumentMoniker": "Physics\\Collisions.cs",
+              "ToolTip": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\Physics\\Collisions.cs",
+              "RelativeToolTip": "Physics\\Collisions.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-06T21:10:58.196Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Physics.cs",
+              "DocumentMoniker": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\Physics\\Physics.cs",
+              "RelativeDocumentMoniker": "Physics\\Physics.cs",
+              "ToolTip": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\Physics\\Physics.cs",
+              "RelativeToolTip": "Physics\\Physics.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAYAAABMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-06T18:45:29.793Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "GameForm.cs",
+              "DocumentMoniker": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\UI\\GameForm.cs",
+              "RelativeDocumentMoniker": "UI\\GameForm.cs",
+              "ToolTip": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\UI\\GameForm.cs",
+              "RelativeToolTip": "UI\\GameForm.cs",
+              "ViewState": "AgIAAJkAAAAAAAAAAAAmwGsAAABEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-06T18:29:22.768Z",
+              "EditorCaption": ""
             }
           ]
         }

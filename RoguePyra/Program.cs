@@ -122,7 +122,18 @@ namespace RoguePyra
 			Console.WriteLine("[MAIN] Client closed.");
         }
 
-        // --- Helpers -----------------------------------------------------------
+        private static void RunDevBox()
+        {
+            Console.WriteLine($"[ENTRY] Starting Physics Box...");
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new RoguePyra.Physics.PhysicsBox());
+            Console.WriteLine($"[ENTRY] Physics Box Stopped.");
+        }
+
+        // -----------------------------------------------------------------------------
+        // Helpers (arg parsing + help)
+        // -----------------------------------------------------------------------------
 
         private static bool HasFlag(string[] args, string name)
             => args.Any(a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase));

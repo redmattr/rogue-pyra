@@ -123,7 +123,7 @@ public sealed class UdpGameHost
             if (dt <= 0f) { await Task.Delay(1, ct); continue; }
             last = now;
 
-            // ---- Update players & prune stale ----
+            // ---- Update players & prune stale players ----
             var toRemove = new List<IPEndPoint>();
             foreach (var (ep, pl) in _players)
             {
