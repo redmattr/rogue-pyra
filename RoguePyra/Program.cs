@@ -28,7 +28,7 @@ namespace RoguePyra
 {
 	internal static class Program
 	{
-		enum ProgramMode { notSet, server, host, clientCLI, clientViz } // Possible program modes.
+		enum ProgramMode { notSet, server, host, clientCLI, clientViz, devbox } // Possible program modes.
 
         // We only need STAThread when launching WinForms (clientviz),
         // but it doesn't hurt to have it here for the whole program.
@@ -37,6 +37,7 @@ namespace RoguePyra
 		{
 			// Determine program mode to run in.
 			ProgramMode programMode = ProgramMode.notSet;
+			if (args.Contains("--devbox", StringComparer.OrdinalIgnoreCase)) programMode = ProgramMode.devbox;
 			if (args.Contains("--server", StringComparer.OrdinalIgnoreCase)) programMode = ProgramMode.server;
 			if (args.Contains("--host", StringComparer.OrdinalIgnoreCase)) {
 				if (programMode == ProgramMode.notSet) programMode = ProgramMode.host;
@@ -53,7 +54,7 @@ namespace RoguePyra
             
 			// Determine other options with default values.
 			IPAddress bindIP    = IPAddress.Parse(GetArg(args, "--bind") ?? "0.0.0.0");
-            IPAddress hostIP    = IPAddress.Parse(GetArg(args, "--host") ?? "127.0.0.1");
+            IPAddress hostIP    = IPAddress.Parse(GetArg(args, "--hostip") ?? "127.0.0.1");
             int tcpPort         = ParseInt(GetArg(args, "--tcpport"), Protocol.DefaultTcpPort);
             int udpPort         = ParseInt(GetArg(args, "--udpport"), Protocol.DefaultUdpPort);
             string playerName   = GetArg(args, "--name") ?? $"Player{Random.Shared.Next(1000, 9999)}";
@@ -80,6 +81,9 @@ namespace RoguePyra
 					return;
 				case ProgramMode.notSet: // If no mode specified, show help and exit.
 					PrintHelp("Error: no program mode was specified.");
+					return;
+				case ProgramMode.devbox:
+					RunDevBox();
 					return;
 				default: // This should be impossible to run, but just in case...
 					PrintHelp("Unknown logic error. This code should be unreachable, please notify the developers.");
@@ -160,7 +164,7 @@ namespace RoguePyra
             Console.WriteLine("RoguePyra — modes:");
 			Console.WriteLine("  --server      [--bind <ip>] [--tcpport <p>]");
 			Console.WriteLine("  --host        [--udpport <p>]");
-			Console.WriteLine("  --clientcli   --name <n> --host <ip> [--tcpport <p>]");
+			Console.WriteLine("  --clientcli   --name <n> --hostip <ip> [--tcpport <p>]");
 			Console.WriteLine("  --clientviz   (launches WinForms menu)");
 			Console.WriteLine();
             Console.WriteLine("Examples:");
