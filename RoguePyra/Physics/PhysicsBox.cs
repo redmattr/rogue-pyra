@@ -39,7 +39,7 @@ namespace RoguePyra.Physics
             StartPosition = FormStartPosition.CenterScreen;
 
             phy.SetSimRate(10); //Measured in frames per second
-            phy.SetSubSteps(2);
+            phy.SetSubSteps(8);
 
             DoubleBuffered = true;
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
@@ -47,8 +47,9 @@ namespace RoguePyra.Physics
             FormClosing += OnFormClosing;
 
             phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH / 2), 1f, 30f, true));
-            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH - (WorldH / 4)), 1f, 30f, false));
-            phy.AddEntity(new EntityPhysical(new Vector2(0, WorldH - 50f), 1f, WorldW, 50f, false));
+            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 3, WorldH - (WorldH / 4)), 1f, 30f, true));
+            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 1.5, WorldH / 1.5), 1f, 30f, true));
+            //phy.AddEntity(new EntityPhysical(new Vector2(0, WorldH - 50f), 1f, WorldW, 50f, false));
 
             _renderTimer = new WinFormsTimer { Interval = 1 };
             _renderTimer.Tick += new EventHandler(PhysicsSimulation);
@@ -99,6 +100,14 @@ namespace RoguePyra.Physics
                 g.DrawString(GetFPS(), font, brush, 2f, 2f);
             }
             */
+
+            //Generate constraint circle
+            using (var pen = new Pen(Color.Gray, 20f))
+            {
+                g.DrawEllipse(pen, 240f, 240f, 240f, 240f);
+
+            }
+
             //Draw objects to screen
             using (var pen = new Pen(Color.White, 1f))
             {
