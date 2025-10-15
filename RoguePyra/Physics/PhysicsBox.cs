@@ -48,7 +48,7 @@ namespace RoguePyra.Physics
 
             phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH / 2), 1f, 30f, true));
             phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 3, WorldH - (WorldH / 4)), 1f, 30f, true));
-            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 1.5, WorldH / 1.5), 1f, 30f, true));
+            //phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 1.5f, WorldH / 1.5f), 1f, 30f, true));
             //phy.AddEntity(new EntityPhysical(new Vector2(0, WorldH - 50f), 1f, WorldW, 50f, false));
 
             _renderTimer = new WinFormsTimer { Interval = 1 };

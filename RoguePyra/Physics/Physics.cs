@@ -54,7 +54,7 @@ namespace RoguePyra.Physics
             for (int i = 0; i < SubSteps; i++)
             {
                 AddGrav();
-                AddConstraint();
+                //AddConstraint();
                 CalcCollisions(GetStep);
                 UpdateObjects(GetStep);
             }
@@ -68,7 +68,7 @@ namespace RoguePyra.Physics
             foreach (EntityPhysical obj in entObj)
             {
                 Vector2 DistObj = obj.Position - Constraint;
-                float CurrDist = DistObj.length;
+                float CurrDist = DistObj.Length();
 
                 if (CurrDist > (radius - obj.radius))
                 {
