@@ -47,7 +47,7 @@ namespace RoguePyra.Physics
             FormClosing += OnFormClosing;
 
             phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH / 2), 1f, 30f, true));
-            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 3, WorldH - (WorldH / 4)), 1f, 30f, true));
+            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH - (WorldH / 4)), 1f, 30f, false));
             //phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 1.5f, WorldH / 1.5f), 1f, 30f, true));
             //phy.AddEntity(new EntityPhysical(new Vector2(0, WorldH - 50f), 1f, WorldW, 50f, false));
 
@@ -104,7 +104,7 @@ namespace RoguePyra.Physics
             //Generate constraint circle
             using (var pen = new Pen(Color.Gray, 20f))
             {
-                g.DrawEllipse(pen, 240f, 240f, 240f, 240f);
+                //g.DrawEllipse(pen, 240f, 240f, 240f, 240f);
 
             }
 
