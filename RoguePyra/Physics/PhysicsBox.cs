@@ -49,7 +49,7 @@ namespace RoguePyra.Physics
             phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH / 2), 1f, 30f, true));
             phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH - (WorldH / 4)), 1f, 30f, false));
             //phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 1.5f, WorldH / 1.5f), 1f, 30f, true));
-            //phy.AddEntity(new EntityPhysical(new Vector2(0, WorldH - 50f), 1f, WorldW, 50f, false));
+            phy.AddEntity(new EntityPhysical(new Vector2(0, WorldH - 50f), 1f, WorldW, 50f, false));
 
             _renderTimer = new WinFormsTimer { Interval = 1 };
             _renderTimer.Tick += new EventHandler(PhysicsSimulation);
@@ -116,10 +116,10 @@ namespace RoguePyra.Physics
                 {
                     if (entity.EntityShape == EntityPhysical.Shape.CIRCLE)
                     {
-                        g.DrawEllipse(pen, entity.Position.X, entity.Position.Y, entity.radius, entity.radius);
+                        g.DrawEllipse(pen, entity.Position.X, entity.Position.Y, entity.radius*2, entity.radius*2);
                         using (var brush = new SolidBrush(Color.White))
                         {
-                            g.FillEllipse(brush, entity.Position.X, entity.Position.Y, entity.radius, entity.radius);
+                            g.FillEllipse(brush, entity.Position.X, entity.Position.Y, entity.radius*2, entity.radius*2);
                         }
                     }
                     else if (entity.EntityShape == EntityPhysical.Shape.RECTANGLE)

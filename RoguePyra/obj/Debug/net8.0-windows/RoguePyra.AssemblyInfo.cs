@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RoguePyra")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+00bae12e267ca957f51a801ebf0a54c25e87b52a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+34a1a45bee43992d5250e1cde01591418cbf3f97")]
 [assembly: System.Reflection.AssemblyProductAttribute("RoguePyra")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RoguePyra")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
