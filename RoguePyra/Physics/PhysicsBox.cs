@@ -46,10 +46,11 @@ namespace RoguePyra.Physics
 
             FormClosing += OnFormClosing;
 
-            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH / 2), 1f, 30f, true));
-            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH - (WorldH / 4)), 1f, 30f, false));
+            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH / 2), 1f, 30f, true)); //Circle
+            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 2, WorldH - (WorldH / 4)), 1f, 30f, false)); //Circle
             //phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 1.5f, WorldH / 1.5f), 1f, 30f, true));
-            phy.AddEntity(new EntityPhysical(new Vector2(0, WorldH - 50f), 1f, WorldW, 50f, false));
+            phy.AddEntity(new EntityPhysical(new Vector2(0, WorldH - 50f), 1f, WorldW, 50f, false, false)); //Rectangle floor
+            phy.AddEntity(new EntityPhysical(new Vector2(WorldW / 6, WorldH / 6), 1f, 10f, 10f, true, true)); // Square
 
             _renderTimer = new WinFormsTimer { Interval = 1 };
             _renderTimer.Tick += new EventHandler(PhysicsSimulation);
@@ -129,7 +130,9 @@ namespace RoguePyra.Physics
                         {
                             g.FillRectangle(brush, entity.Position.X, entity.Position.Y, entity.width, entity.height);
                         }
+                        Console.WriteLine(entity.Position);
                     }
+                    
                 }
             }
         }
