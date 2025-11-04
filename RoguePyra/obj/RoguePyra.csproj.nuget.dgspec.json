@@ -1,28 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj": {}
+    "U:\\rogue-pyra\\RoguePyra\\RoguePyra.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj": {
+    "U:\\rogue-pyra\\RoguePyra\\RoguePyra.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
+        "projectUniqueName": "U:\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
         "projectName": "RoguePyra",
-        "projectPath": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
-        "packagesPath": "C:\\Users\\Matt\\.nuget\\packages",
-        "outputPath": "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\obj\\",
+        "projectPath": "U:\\rogue-pyra\\RoguePyra\\RoguePyra.csproj",
+        "packagesPath": "C:\\Users\\mjrst268\\.nuget\\packages",
+        "outputPath": "U:\\rogue-pyra\\RoguePyra\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
-          "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Matt\\source\\repos\\rogue-pyra\\RoguePyra\\NuGet.Config",
-          "C:\\Users\\Matt\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "U:\\rogue-pyra\\RoguePyra\\NuGet.Config",
+          "C:\\Users\\mjrst268\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0-windows"
