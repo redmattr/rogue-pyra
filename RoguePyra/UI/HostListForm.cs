@@ -32,6 +32,8 @@ namespace RoguePyra.UI
         private TextBox _tbDirectIp;
         private TextBox _tbDirectUdp;
         private Button _btnDirectConnect;
+        private string _playerName = "";
+
 
 
 
@@ -116,7 +118,11 @@ namespace RoguePyra.UI
 
                 var ip = _tbServerIp.Text.Trim();
                 if (!int.TryParse(_tbTcpPort.Text, out var port)) port = Protocol.DefaultTcpPort;
-                var name = string.IsNullOrWhiteSpace(_tbPlayerName.Text) ? "Player" + Random.Shared.Next(1000, 9999) : _tbPlayerName.Text.Trim();
+                var name = string.IsNullOrWhiteSpace(_tbPlayerName.Text)
+                    ? "Player" + Random.Shared.Next(1000, 9999)
+                    : _tbPlayerName.Text.Trim();
+
+                _playerName = name;
 
                 await _net.ConnectTcpAsync(name, ip, port);
                 _status.Text = $"Connected to {ip}:{port} as {name}.";
@@ -240,9 +246,17 @@ namespace RoguePyra.UI
                         }
 
                         bool isHost = (_pendingJoinLobbyId == _lastHostedLobbyId);
-                        var gf = new GameForm(IPAddress.Parse(ip), udpPort, _net, isHost: isHost, lobbyId: _pendingJoinLobbyId);
+                        var gf = new GameForm(
+                            IPAddress.Parse(ip),
+                            udpPort,
+                            _net,
+                            isHost: isHost,
+                            lobbyId: _pendingJoinLobbyId,
+                            localPlayerId: _playerName);
+
                         _netOwned = false;
                         gf.Show();
+
 
                         // reset
                         _pendingJoinLobbyId = -1;
@@ -406,9 +420,20 @@ namespace RoguePyra.UI
 
                 _status.Text = $"Direct connecting to {ip}:{udpPort} …";
 
-                // Open the game view; it will call ConnectUdpAsync inside its ctor
-                var gf = new GameForm(ip, udpPort, _net, isHost: false, lobbyId: 0);
-                _netOwned = false; // GameForm now reuses the manager instance
+                
+                if (string.IsNullOrWhiteSpace(_playerName))
+                {
+                    _playerName = string.IsNullOrWhiteSpace(_tbPlayerName.Text)
+                        ? "Player" + Random.Shared.Next(1000, 9999)
+                        : _tbPlayerName.Text.Trim();
+                }
+
+                
+                
+                
+                // Open the game view
+                var gf = new GameForm(ip, udpPort, _net, isHost: false, lobbyId: 0, localPlayerId: _playerName);
+                _netOwned = false;
                 gf.Show();
             }
             catch (Exception ex)

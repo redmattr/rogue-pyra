@@ -43,12 +43,12 @@ public sealed class UdpGameHost
 
     // ---- World constants ----
     private int _snapSeq = 0;
-    private const float WORLD_W = 840f, WORLD_H = 480f;
+    private const float WORLD_W = 4000f, WORLD_H = 2000f;
     private const float BOX = 24f;
 
     // Lava rises forever; game never ends
     private float _lavaY = WORLD_H; // Y of lava surface (0 = top)
-    private const float LavaRate = 18f;   // px/sec rising speed
+    private const float LavaRate = 5f;   // px/sec rising speed
     private const int   LavaDps  = 60;    // damage per second when submerged
 
     public UdpGameHost(int udpPort = Protocol.DefaultUdpPort)
