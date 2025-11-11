@@ -28,8 +28,7 @@ namespace RoguePyra {
 	internal static class Program {
 		enum ProgramMode { notSet, server, host, clientCLI, clientViz, devbox } // Possible program modes.
 
-		// We only need STAThread when launching WinForms (clientviz),
-		// but it doesn't hurt to have it here for the whole program.
+		// We only need STAThread when launching WinForms (clientviz), but it doesn't hurt to have it here for the whole program.
 		[STAThread]
 		private static async Task Main(string[] args) {
 
@@ -106,6 +105,7 @@ namespace RoguePyra {
 			Console.WriteLine("[ENTRY] UDP host stopped.");
 		}
 
+		// This might be redundant now??? I might try removing this at some point, hopefully nothing explodes - Ian.
 		private static async Task RunClientCLIAsync(string name, IPAddress hostIp, int tcpPort, CancellationToken ct) {
 			TcpClientApp client = new(name, hostIp.ToString(), tcpPort);
 			Console.WriteLine($"[ENTRY] Starting TCP console client to {hostIp}:{tcpPort} as '{name}'  (type /quit to exit)");
@@ -144,8 +144,7 @@ namespace RoguePyra {
 		}
 
 		// Attempts to parse int, returns fallback on fail (defaults to -1 if fallback not provided).
-		private static int ParseInt(string? s, int fallback = -1)
-			=> int.TryParse(s, out int v) ? v : fallback;
+		private static int ParseInt(string? s, int fallback = -1) => int.TryParse(s, out int v) ? v : fallback;
 
 		// Prints info about the program arguments, with a preceeding message if specified.
 		private static void PrintHelp(string? message = null) {
