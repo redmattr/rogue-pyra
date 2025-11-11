@@ -71,11 +71,12 @@ namespace RoguePyra.Entity
         }
 
         //Circle
-        public EntityPhysical(Vector2 pos, float mass, float rad, bool hasGrav)
+        public EntityPhysical(Vector2 pos, float mass, float rad, bool hasGrav, bool isMov)
         {
             Position = pos;
             this.mass = mass;
             _IsGrav = hasGrav;
+            _IsMov = isMov;
             radius = rad;
             DynamicFriction = 1f;
             StaticFriction = 1f;

@@ -146,7 +146,7 @@ namespace RoguePyra.Physics
                             //Console.WriteLine("VecA " + a);
                             float ratio1 = obj.radius / (obj.radius + obj2.radius);
                             float ratio2 = obj2.radius / (obj.radius + obj2.radius);
-                            float delta = 0.5f * response * (dist - minDist);
+                            float delta = 0.1f * response * (dist - minDist);
 
                             obj.Position -= a * (ratio2 * delta);
                             obj2.Position += a * (ratio1 * delta);
@@ -160,46 +160,47 @@ namespace RoguePyra.Physics
                             (obj.Position.Y + obj.height) > obj2.Position.Y  && //If obj1's height is above obj2's
                              obj.Position.Y < (obj2.Position.Y + obj2.height))  //If obj1's height is below obj2's
                         {
+                            //Console.WriteLine("Collision Detected!");
                             //If both objects are immovable (like a room), continue loop
                             if (obj._IsMov == false && obj2._IsMov == false) continue;
 
                             //Calculate the overlap, resolve on least overlap
                             if (CalculateOverlapX(obj, obj2) < CalculateOverlapY(obj, obj2)) //Push along x
                             {
-                                if (obj._IsMov) //First rectangle is rigid
+                                if (obj._IsMov) //Second rectangle is rigid
                                 {
-                                    obj2.Position = new Vector2(obj2.Position.X + CalculateOverlapX(obj, obj2), obj2.Position.Y);
+                                    obj.Position -= new Vector2(obj.Position.X + CalculateOverlapX(obj, obj2), 0f);
                                 }
-                                else if (obj2._IsMov) //Second rectangle is rigid
+                                else if (obj2._IsMov) //First rectangle is rigid
                                 {
-                                    obj.Position = new Vector2(obj.Position.X - CalculateOverlapX(obj, obj2), obj.Position.Y);
+                                    obj2.Position -= new Vector2(obj2.Position.X - CalculateOverlapX(obj, obj2), 0f);
                                 }
                                 else //No rectangle is rigid
                                 {
-                                    obj.Position = new Vector2(obj.Position.X - CalculateOverlapX(obj, obj2)/2f, obj.Position.Y);
-                                    obj2.Position = new Vector2(obj2.Position.X + CalculateOverlapX(obj, obj2)/2f, obj2.Position.Y);
+                                    obj.Position -= new Vector2(obj.Position.X - CalculateOverlapX(obj, obj2)/2f, obj.Position.Y);
+                                    obj2.Position += new Vector2(obj2.Position.X + CalculateOverlapX(obj, obj2)/2f, obj2.Position.Y);
                                 }
                             }
                             else //Push along y
                             {
                                 if (obj._IsMov) //Second rectangle is rigid
                                 {
-                                    obj.Position = new Vector2(obj2.Position.X, obj2.Position.Y + CalculateOverlapY(obj, obj2));
-                                    Console.WriteLine("Obj2: " + obj2.Position);
+                                    obj.Position -= new Vector2(0f, CalculateOverlapY(obj, obj2));
+                                    //Console.WriteLine("Obj: " + obj.Position);
                                 }
                                 else if (obj2._IsMov) //First rectangle is rigid
                                 {
-                                    Console.WriteLine("Obj2: " + obj2.Position);
-                                    Console.WriteLine("Obj1: " + obj.Position);
-                                    obj2.Position = new Vector2(obj2.Position.X, 140f);
-                                    Console.WriteLine("Obj1: " + obj.Position);
-                                    Console.WriteLine("Obj2: " + obj2.Position);
+                                    //Console.WriteLine("Obj2: " + obj2.Position);
+                                    //Console.WriteLine("Obj1: " + obj.Position);
+                                    obj2.Position -= new Vector2(0f, CalculateOverlapY(obj2, obj));
+                                    //Console.WriteLine("Obj1: " + obj.Position);
+                                    //Console.WriteLine("Obj2: " + obj2.Position);
 
                                 }
                                 else //No rectangle is rigid
                                 {
-                                    obj.Position = new Vector2(obj.Position.X, obj.Position.Y - CalculateOverlapY(obj, obj2)/2f);
-                                    obj2.Position = new Vector2(obj2.Position.X, obj2.Position.Y + CalculateOverlapY(obj, obj2)/2f);
+                                    obj.Position -= new Vector2(0f, obj.Position.Y - CalculateOverlapY(obj, obj2)/2f);
+                                    obj2.Position += new Vector2(0f, obj2.Position.Y + CalculateOverlapY(obj, obj2)/2f);
                                     Console.WriteLine("Objboth: " + obj2.Position);
                                 }
                             }
@@ -207,7 +208,59 @@ namespace RoguePyra.Physics
                     }
                     else //Object shapes are a combination
                     {
+                        if (obj._IsMov == false && obj2._IsMov == false) continue; //If both objects are rigid, skip
 
+                        if (obj.EntityShape == EntityPhysical.Shape.CIRCLE && obj2.EntityShape == EntityPhysical.Shape.RECTANGLE)
+                        {
+                            
+                            float distX = obj.Position.X;
+                            float distY = obj.Position.Y;
+
+                            //Check for overlap
+                            if (obj.Position.X < obj2.Position.X)
+                            {
+                                distX -= obj2.Position.X;
+                            }
+                            else if (obj.Position.X > (obj2.Position.X + obj2.width))
+                            {
+                                distX -= (obj2.Position.X + obj2.width);
+                            }
+                            else
+                            {
+                                distX -= obj.Position.X;
+                            }
+
+                            if (obj.Position.Y < obj2.Position.Y)
+                            {
+                                distY -= obj2.Position.Y;
+                            }
+                            else if (obj.Position.Y > (obj2.Position.Y + obj2.height))
+                            {
+                                distY -= (obj2.Position.Y + obj2.height);
+                            }
+                            else
+                            {
+                                distY -= obj.Position.Y;
+                            }
+
+                            //Calculate distance and compare it to the circle's radius
+                            //Console.WriteLine("obj1 " + obj.Position);
+                            //Console.WriteLine("obj2 " + obj2.Position);
+                            float dist = (float)Math.Sqrt(distX * distX + distY * distY);
+                            //Console.WriteLine("Dist: " + dist);
+                            if (dist <= obj.radius*2f) //Check collision
+                            {
+                                //Resolve
+                                float x = 2f*obj.radius-(float)Math.Sqrt(distX * distX);
+                                if (x == (2f * obj.radius)) x = 0;
+                                float y = 2f*obj.radius-(float)Math.Sqrt(distY * distY);
+                                Vector2 vec = new Vector2(x, y);
+                                
+                                Console.WriteLine("X: " + x);
+                                Console.WriteLine("Y: " + y);
+                                obj.Position -= vec;
+                            }
+                        }
                     }
                 }
             }
@@ -215,12 +268,16 @@ namespace RoguePyra.Physics
 
         private float CalculateOverlapX(EntityPhysical obj1, EntityPhysical obj2)
         {
-            return (Math.Min(obj1.Position.X + obj1.width, obj2.Position.X + obj2.width) - Math.Max(obj1.Position.X, obj2.Position.X));
+           // Console.WriteLine("X overlap: ");
+            //Console.WriteLine((obj1.Position.X + obj1.width) - obj2.Position.X);
+            return ((obj1.Position.X + obj1.width) - obj2.Position.X);
         }
 
         private float CalculateOverlapY(EntityPhysical obj1, EntityPhysical obj2)
         {
-            return (Math.Min(obj1.Position.Y + obj1.height, obj2.Position.X + obj2.height) - Math.Max(obj1.Position.Y, obj2.Position.Y));
+            //Console.WriteLine("Y Overlap: ");
+           // Console.WriteLine((obj1.Position.Y + obj1.height) - obj2.Position.Y);
+            return ((obj1.Position.Y + obj1.height) - obj2.Position.Y);
         }
 
         private void AddGrav()
