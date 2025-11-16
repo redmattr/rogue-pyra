@@ -30,10 +30,15 @@ namespace RoguePyra.UI
         private float _camY;
         private string? _followId;
 
-        // Latest snapshot (UI-thread copy)
+        // Latest snapshot state (raw from UDP)
+        private readonly Dictionary<string, (float x, float y, int hp)> _snapshotEntities = new();
+
+        // Smoothed positions used for rendering
         private readonly Dictionary<string, (float x, float y, int hp)> _viewEntities = new();
+
         private float _lavaY = WorldH;
         private volatile bool _hasSnapshot;
+
 
         // Input
         private bool _up, _left, _down, _right;
@@ -221,7 +226,9 @@ namespace RoguePyra.UI
             _platforms.Sort((a, b) => a.Y.CompareTo(b.Y));
 
             // --- Start UDP client (NO UdpGameHost here) ---
-            _udpClient = new UdpGameClient(_hostIp, _udpPort);
+            var nameForUdp = _localPlayerName ?? string.Empty;
+            _udpClient = new UdpGameClient(_hostIp, _udpPort, nameForUdp);
+
             _udpClient.SnapshotApplied += OnUdpSnapshot;
             _udpClient.WinnerAnnounced += OnWinner;
 
@@ -276,49 +283,51 @@ namespace RoguePyra.UI
         {
             if (!IsHandleCreated) return;
 
-            BeginInvoke(new Action(() =>
-            {
-                _hasSnapshot = true;
-                _isReconnecting = false;
-                _lavaY = _udpClient.LavaY;
-
-                _viewEntities.Clear();
-                foreach (var kv in _udpClient.Entities)
-                    _viewEntities[kv.Key] = kv.Value;
-
-                // Choose follow target if none or target vanished
-                if (_followId == null || !_viewEntities.ContainsKey(_followId))
-                {
-                    foreach (var k in _viewEntities.Keys)
+                BeginInvoke(new Action(() =>
                     {
-                        _followId = k;
-                        break;
-                    }
-                }
+                        _hasSnapshot = true;
+                        _isReconnecting = false;
+                        _lavaY = _udpClient.LavaY;
 
-                // Smoothly move camera toward follow target
-                if (_followId != null && _viewEntities.TryGetValue(_followId, out var ft))
-                {
-                    float playW = ClientSize.Width - ChatPanelW;
-                    float playH = ClientSize.Height - _status.Height - TopBarH;
+                        // 1) Copy raw snapshot into _snapshotEntities
+                        _snapshotEntities.Clear();
+                        foreach (var kv in _udpClient.Entities)
+                            _snapshotEntities[kv.Key] = kv.Value;
 
-                    float targetX = ft.x + Box * 0.5f - playW * 0.5f;
-                    float targetY = ft.y + Box * 0.5f - playH * 0.5f;
+                        // 2) First snapshot: snap render state directly so we don’t lerp from (0,0)
+                        if (_viewEntities.Count == 0)
+                        {
+                            _viewEntities.Clear();
+                            foreach (var kv in _snapshotEntities)
+                                _viewEntities[kv.Key] = kv.Value;
+                        }
 
-                    targetX = Math.Clamp(targetX, 0, Math.Max(0, WorldW - playW));
-                    targetY = Math.Clamp(targetY, 0, Math.Max(0, WorldH - playH));
+                        // Prefer to follow our own player name if present
+                        if (!string.IsNullOrEmpty(_localPlayerName) &&
+                            _viewEntities.ContainsKey(_localPlayerName))
+                        {
+                            _followId = _localPlayerName;
+                        }
+                        else if (_followId == null || !_viewEntities.ContainsKey(_followId))
+                        {
+                            foreach (var k in _viewEntities.Keys)
+                            {
+                                _followId = k;
+                                break;
+                            }
+                        }
 
-                    _camX += (targetX - _camX) * CamLerp;
-                    _camY += (targetY - _camY) * CamLerp;
-                }
 
-                _status.Text = _hasSnapshot
-                    ? $"Players: {_viewEntities.Count} | LavaY: {_lavaY:F0}"
-                    : "Waiting for snapshots…";
+                        // 4) Status only – camera movement will now happen in RenderWorld
+                        _status.Text = _hasSnapshot
+                            ? $"Players: {_snapshotEntities.Count} | LavaY: {_lavaY:F0}"
+                            : "Waiting for snapshots…";
 
-                Invalidate();
-            }));
+                        Invalidate();
+                    }));
+
         }
+
 
         private void OnWinner(string winnerId)
         {
@@ -378,8 +387,16 @@ namespace RoguePyra.UI
                 {
                     try
                     {
-                        // Use our last known lava height so world progression continues
-                        _udpHost = new UdpGameHost(_udpPort, _lavaY);
+                        // Build a seed snapshot from our last known entities
+                        IDictionary<string, (float x, float y, int hp)>? seeds = null;
+
+                        if (_viewEntities.Count > 0)
+                        {
+                            seeds = new Dictionary<string, (float x, float y, int hp)>(_viewEntities);
+                        }
+
+                        // Use our last known lava height + seeded players so world progression continues
+                        _udpHost = new UdpGameHost(_udpPort, _lavaY, seeds);
                         _ = _udpHost.RunAsync(_cts.Token);
                         _isHost = true; // this client now truly owns the UDP simulation
                     }
@@ -387,6 +404,7 @@ namespace RoguePyra.UI
                     {
                         _status.Text = "Failed to start local host: " + ex.Message;
                     }
+
                 }
             }
 
@@ -394,12 +412,15 @@ namespace RoguePyra.UI
             // In all cases, create a fresh UDP client that points to the new host endpoint
             try
             {
-                var newClient = new UdpGameClient(_hostIp, _udpPort);
+                var nameForUdp = _localPlayerName ?? string.Empty;
+
+                var newClient = new UdpGameClient(_hostIp, _udpPort, nameForUdp);
                 newClient.SnapshotApplied += OnUdpSnapshot;
                 newClient.WinnerAnnounced += OnWinner;
 
                 _udpClient = newClient;
                 _ = _udpClient.RunAsync(_cts.Token);
+
             }
             catch (Exception ex)
             {
@@ -535,6 +556,57 @@ namespace RoguePyra.UI
                 return;
             }
 
+            // ----- Smooth render positions toward latest snapshot -----
+            const float posLerp = 0.25f; // tweak 0.2–0.4 for more/less smoothing
+
+            if (_snapshotEntities.Count > 0)
+            {
+                // Remove entities that disappeared in the latest snapshot
+                var toRemove = new List<string>();
+                foreach (var id in _viewEntities.Keys)
+                {
+                    if (!_snapshotEntities.ContainsKey(id))
+                        toRemove.Add(id);
+                }
+                foreach (var id in toRemove)
+                    _viewEntities.Remove(id);
+
+                // Add / update entities from snapshot
+                foreach (var kv in _snapshotEntities)
+                {
+                    var target = kv.Value;
+                    if (_viewEntities.TryGetValue(kv.Key, out var cur))
+                    {
+                        float nx = cur.x + (target.x - cur.x) * posLerp;
+                        float ny = cur.y + (target.y - cur.y) * posLerp;
+                        int hp = target.hp; // HP snaps to server value
+
+                        _viewEntities[kv.Key] = (nx, ny, hp);
+                    }
+                    else
+                    {
+                        // New entity: just snap it in
+                        _viewEntities[kv.Key] = target;
+                    }
+                }
+            }
+
+
+            // ----- Camera follow using SMOOTHED positions -----
+            if (_followId != null && _viewEntities.TryGetValue(_followId, out var ft))
+            {
+                float targetX = ft.x + Box * 0.5f - (playW * 0.5f);
+                float targetY = ft.y + Box * 0.5f - (playH * 0.5f);
+
+                targetX = Math.Clamp(targetX, 0, Math.Max(0, WorldW - playW));
+                targetY = Math.Clamp(targetY, 0, Math.Max(0, WorldH - playH));
+
+                _camX += (targetX - _camX) * CamLerp;
+                _camY += (targetY - _camY) * CamLerp;
+            }
+
+
+
 
             // Lava
             float lavaScreenY = playY + (_lavaY - _camY);
@@ -561,25 +633,44 @@ namespace RoguePyra.UI
             }
 
             // Players
-            foreach (var (id, (x, y, hp)) in _viewEntities)
+            using (var nameFont = new Font(Font.FontFamily, 8f))
             {
-                float sx = playX + (x - _camX);
-                float sy = playY + (y - _camY);
+                foreach (var (id, (x, y, hp)) in _viewEntities)
+                {
+                    float sx = playX + (x - _camX);
+                    float sy = playY + (y - _camY);
 
-                if (sx + Box < playX || sx > playX + playW) continue;
-                if (sy + Box < playY || sy > playY + playH) continue;
+                    if (sx + Box < playX || sx > playX + playW) continue;
+                    if (sy + Box < playY || sy > playY + playH) continue;
 
-                var rect = new RectangleF(sx, sy, Box, Box);
-                var bodyColor = id == _followId ? Color.Lime : Color.Cyan;
-                using (var b = new SolidBrush(bodyColor))
-                    g.FillRectangle(b, rect);
+                    var rect = new RectangleF(sx, sy, Box, Box);
+                    var bodyColor = id == _followId ? Color.Lime : Color.Cyan;
+                    using (var b = new SolidBrush(bodyColor))
+                        g.FillRectangle(b, rect);
 
-                // HP bar
-                float hpFrac = Math.Max(0, Math.Min(1, hp / 100f));
-                var hpRect = new RectangleF(sx, sy - 6, Box * hpFrac, 4);
-                using (var hb = new SolidBrush(Color.Lime))
-                    g.FillRectangle(hb, hpRect);
+                    // HP bar
+                    float hpFrac = Math.Max(0, Math.Min(1, hp / 100f));
+                    var hpRect = new RectangleF(sx, sy - 6, Box * hpFrac, 4);
+                    using (var hb = new SolidBrush(Color.Lime))
+                        g.FillRectangle(hb, hpRect);
+
+                    // --- Player name under the box ---
+                    string label = id;  // id is already the player name
+                    var nameSize = g.MeasureString(label, nameFont);
+
+                    float nameX = sx + (Box - nameSize.Width) / 2f;
+                    float nameY = sy + Box + 2; // a few pixels below the box
+
+                    // Clamp so the text doesn't go below the play area
+                    if (nameY + nameSize.Height > playY + playH)
+                        nameY = playY + playH - nameSize.Height;
+
+                    // Highlight local player's name
+                    Brush nameBrush = (id == _localPlayerName) ? Brushes.Yellow : Brushes.White;
+                    g.DrawString(label, nameFont, nameBrush, nameX, nameY);
+                }
             }
+
         }
 
         // ----------------- Cleanup -----------------
