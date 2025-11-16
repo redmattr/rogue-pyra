@@ -40,15 +40,17 @@ namespace RoguePyra.UI
 
         // Networking
         private readonly NetworkManager _net;   // TCP: chat / lobby control
-        private readonly IPAddress _hostIp;     // UDP host (from JOIN_INFO)
-        private readonly int _udpPort;
-        private readonly bool _isHost;          // this client created lobby? (for HOST_START / UNREGISTER)
+        private IPAddress _hostIp;              // UDP host (from JOIN_INFO / HOST_MIGRATE)
+        private int _udpPort;
+        private bool _isHost;                   // lobby host flag (initially from JOIN, may change on migration)
         private readonly int _lobbyId;
 
         private readonly CancellationTokenSource _cts = new();
-        private readonly UdpGameClient _udpClient;
+        private UdpGameClient _udpClient;
+        private UdpGameHost? _udpHost;          // only non-null if this client is currently acting as host
 
-        private readonly string? _localPlayerName; // purely cosmetic right now
+        private readonly string? _localPlayerName; // this player's TCP name
+
 
         // UI
         private readonly Label _status;
@@ -59,6 +61,7 @@ namespace RoguePyra.UI
         private readonly Panel _topBar;
         private Button? _btnStart;
         private Button? _btnLeave;
+        private bool _isReconnecting;
 
         private readonly List<RectangleF> _platforms = new();
         private readonly WinFormsTimer _renderTimer;
@@ -239,6 +242,24 @@ namespace RoguePyra.UI
             BeginInvoke(new Action(() =>
             {
                 line = (line ?? string.Empty).Trim();
+
+                // 1) Host migration control message
+                if (line.StartsWith("HOST_MIGRATE ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 4)
+                    {
+                        var newHostName = parts[1];
+                        var newHostIpStr = parts[2];
+                        if (!int.TryParse(parts[3], out var newUdpPort))
+                            newUdpPort = _udpPort;
+
+                        HandleHostMigrate(newHostName, newHostIpStr, newUdpPort);
+                    }
+                    return;
+                }
+
+                // 2) Normal chat/info/error messages
                 if (line.StartsWith("SAY ", StringComparison.OrdinalIgnoreCase) ||
                     line.StartsWith("INFO ", StringComparison.OrdinalIgnoreCase) ||
                     line.StartsWith("ERROR ", StringComparison.OrdinalIgnoreCase))
@@ -248,6 +269,7 @@ namespace RoguePyra.UI
                     _chatLog.ScrollToCaret();
                 }
             }));
+
         }
 
         private void OnUdpSnapshot()
@@ -257,6 +279,7 @@ namespace RoguePyra.UI
             BeginInvoke(new Action(() =>
             {
                 _hasSnapshot = true;
+                _isReconnecting = false;
                 _lavaY = _udpClient.LavaY;
 
                 _viewEntities.Clear();
@@ -307,6 +330,87 @@ namespace RoguePyra.UI
             }));
         }
 
+
+        private void HandleHostMigrate(string newHostName, string newHostIpStr, int newUdpPort)
+        {
+            // Try to parse IP
+            if (!IPAddress.TryParse(newHostIpStr, out var newHostIp))
+            {
+                _status.Text = $"HOST_MIGRATE received with invalid IP: {newHostIpStr}";
+                return;
+            }
+
+            bool iAmNewHost = !string.IsNullOrWhiteSpace(_localPlayerName) &&
+                              string.Equals(_localPlayerName, newHostName, StringComparison.OrdinalIgnoreCase);
+
+            _isReconnecting = true;
+            _hasSnapshot = false;
+            
+            
+            // Log in chat/status
+            var infoLine = iAmNewHost
+                ? $"INFO You are now the host @ {newHostIpStr}:{newUdpPort}"
+                : $"INFO Host migrated to {newHostName} @ {newHostIpStr}:{newUdpPort}";
+
+            _chatLog.AppendText(infoLine + Environment.NewLine);
+            _chatLog.SelectionStart = _chatLog.TextLength;
+            _chatLog.ScrollToCaret();
+            _status.Text = infoLine;
+            
+
+            // Update our view of the host endpoint
+            _hostIp = newHostIp;
+            _udpPort = newUdpPort;
+
+            // Stop listening to old UDP client events (old instance may still run, but won't affect UI)
+            try
+            {
+                _udpClient.SnapshotApplied -= OnUdpSnapshot;
+                _udpClient.WinnerAnnounced -= OnWinner;
+            }
+            catch { }
+
+            // If we are the new host, start a UdpGameHost locally on this port.
+            if (iAmNewHost)
+            {
+                // Optional: only create once
+                if (_udpHost == null)
+                {
+                    try
+                    {
+                        // Use our last known lava height so world progression continues
+                        _udpHost = new UdpGameHost(_udpPort, _lavaY);
+                        _ = _udpHost.RunAsync(_cts.Token);
+                        _isHost = true; // this client now truly owns the UDP simulation
+                    }
+                    catch (Exception ex)
+                    {
+                        _status.Text = "Failed to start local host: " + ex.Message;
+                    }
+                }
+            }
+
+
+            // In all cases, create a fresh UDP client that points to the new host endpoint
+            try
+            {
+                var newClient = new UdpGameClient(_hostIp, _udpPort);
+                newClient.SnapshotApplied += OnUdpSnapshot;
+                newClient.WinnerAnnounced += OnWinner;
+
+                _udpClient = newClient;
+                _ = _udpClient.RunAsync(_cts.Token);
+            }
+            catch (Exception ex)
+            {
+                _status.Text = "Failed to reconnect UDP client: " + ex.Message;
+            }
+
+        }
+
+
+
+
         private async System.Threading.Tasks.Task SendChatAsync()
         {
             var msg = _chatInput.Text.Trim();
@@ -315,13 +419,15 @@ namespace RoguePyra.UI
             _chatInput.Clear();
             try
             {
-                await _net.SendTcpLineAsync("SAY " + msg);
+                // Use the proper MSG:<text> format via NetworkManager
+                await _net.SendChatAsync(msg);
             }
             catch (Exception ex)
             {
                 _status.Text = "Chat send failed: " + ex.Message;
             }
         }
+
 
         // ----------------- Input handling -----------------
 
@@ -418,13 +524,17 @@ namespace RoguePyra.UI
 
             if (!_hasSnapshot)
             {
-                const string waiting = "Waiting for snapshots... (use arrows/WASD to move, TAB to change camera)";
+                string waiting = _isReconnecting
+                    ? "Reconnecting to new host... (hold on a sec)"
+                    : "Waiting for snapshots... (use arrows/WASD to move, TAB to change camera)";
+
                 var sz = g.MeasureString(waiting, Font);
                 g.DrawString(waiting, Font, Brushes.White,
                     playX + (playW - sz.Width) / 2,
                     playY + (playH - sz.Height) / 2);
                 return;
             }
+
 
             // Lava
             float lavaScreenY = playY + (_lavaY - _camY);

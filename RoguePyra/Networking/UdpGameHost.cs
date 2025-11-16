@@ -47,16 +47,18 @@ public sealed class UdpGameHost
     private const float BOX = 24f;
 
     // Lava rises forever; game never ends
-    private float _lavaY = WORLD_H; // Y of lava surface (0 = top)
-    private const float LavaRate = 5f;   // px/sec rising speed
+    private float _lavaY;                 // Y of lava surface (0 = top)
+    private const float LavaRate = 5f;    // px/sec rising speed
     private const int   LavaDps  = 60;    // damage per second when submerged
 
-    public UdpGameHost(int udpPort = Protocol.DefaultUdpPort)
+    public UdpGameHost(int udpPort = Protocol.DefaultUdpPort, float initialLavaY = WORLD_H)
     {
         _listenEp = new IPEndPoint(IPAddress.Any, udpPort);
         _udp = new UdpClient(_listenEp);
-        Console.WriteLine($"[HostUDP] Listening on 0.0.0.0:{udpPort}");
+        _lavaY = initialLavaY;
+        Console.WriteLine($"[HostUDP] Listening on 0.0.0.0:{udpPort}, lavaY={_lavaY:F1}");
     }
+
 
     /// Starts the host: one loop to receive INPUTs, one loop to simulate & broadcast.
     /// Returns when the token is cancelled.

@@ -1,4 +1,4 @@
-﻿using RoguePyra.Physics;
+﻿﻿using RoguePyra.Physics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +19,7 @@ namespace RoguePyra.Entity
         public float height { get; set; } //If object is square/rectangle
         public float width { get; set; } //If object is square/rectangle
         public bool _IsGrav { get; set; } //Is entity affected by grav?
+        public bool _IsMov {  get; set; } //Is entity rigid? E.g. can it be moved (think wall or floor)
         public enum Shape { RECTANGLE, CIRCLE };
         public Shape EntityShape { get; set; } 
 
@@ -54,13 +55,14 @@ namespace RoguePyra.Entity
         }
 
         //Rectangle
-        public EntityPhysical(Vector2 pos, float mass, float width, float height, bool hasGrav)
+        public EntityPhysical(Vector2 pos, float mass, float width, float height, bool hasGrav, bool isMov)
         {
             Position = pos;
             this.mass = mass;
             this.width = width;
             this.height = height;
             _IsGrav = hasGrav;
+            _IsMov = isMov;
             DynamicFriction = 1f;
             StaticFriction = 1f;
             Elasticity = 0f;
@@ -69,11 +71,12 @@ namespace RoguePyra.Entity
         }
 
         //Circle
-        public EntityPhysical(Vector2 pos, float mass, float rad, bool hasGrav)
+        public EntityPhysical(Vector2 pos, float mass, float rad, bool hasGrav, bool isMov)
         {
             Position = pos;
             this.mass = mass;
             _IsGrav = hasGrav;
+            _IsMov = isMov;
             radius = rad;
             DynamicFriction = 1f;
             StaticFriction = 1f;
