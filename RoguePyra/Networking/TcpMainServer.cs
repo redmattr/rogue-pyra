@@ -108,7 +108,9 @@ public sealed class TcpMainServer
     private async Task HandleClientAsync(TcpClient tcp, CancellationToken ct)
     {
         tcp.NoDelay = true;
-        Console.WriteLine("[TCP] Client connected");
+        var remote = (System.Net.IPEndPoint)tcp.Client.RemoteEndPoint!;
+        Console.WriteLine($"[TCP] Client connected from {remote.Address}:{remote.Port}");
+
 
         using var stream = tcp.GetStream();
         using var reader = new StreamReader(stream, Encoding.UTF8, false, 1024, leaveOpen: true);

@@ -29,9 +29,9 @@ namespace RoguePyra.UI
         private NetworkManager? _net;  // used here only for TCP
         private int _expectLobbyLines = 0;
         private int _pendingJoinLobbyId = -1;
-        private TextBox _tbDirectIp;
-        private TextBox _tbDirectUdp;
-        private Button _btnDirectConnect;
+        //private TextBox _tbDirectIp;
+        //private TextBox _tbDirectUdp;
+        //private Button _btnDirectConnect;
         private string _playerName = "";
 
 
@@ -42,7 +42,7 @@ namespace RoguePyra.UI
             Text = "RoguePyra — Host List";
             ClientSize = new Size(800, 480);
             StartPosition = FormStartPosition.CenterScreen;
-            FormBorderStyle = FormBorderStyle.FixedSingle;
+            FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = false;
             BackColor = Color.White;
 
@@ -96,12 +96,12 @@ namespace RoguePyra.UI
             _lvLobbies.SelectedIndexChanged += (_, __) => _btnJoin.Enabled = _lvLobbies.SelectedItems.Count > 0;
 
             // --- Direct Connect (IP:Port) ---
-            _tbDirectIp = new TextBox { Text = "127.0.0.1", Width = 160, Location = new Point(320, 410) };
-            _tbDirectUdp = new TextBox { Text = Protocol.DefaultUdpPort.ToString(), Width = 70, Location = new Point(485, 410) };
-            _btnDirectConnect = new Button { Text = "Direct Connect", Location = new Point(565, 402), Size = new Size(140, 40) };
-            _btnDirectConnect.Click += OnDirectConnectClick;
+            //_tbDirectIp = new TextBox { Text = "127.0.0.1", Width = 160, Location = new Point(320, 410) };
+            //_tbDirectUdp = new TextBox { Text = Protocol.DefaultUdpPort.ToString(), Width = 70, Location = new Point(485, 410) };
+            //_btnDirectConnect = new Button { Text = "Direct Connect", Location = new Point(565, 402), Size = new Size(140, 40) };
+            //_btnDirectConnect.Click += OnDirectConnectClick;
 
-            Controls.AddRange(new Control[] { _tbDirectIp, _tbDirectUdp, _btnDirectConnect });
+            //Controls.AddRange(new Control[] { _tbDirectIp, _tbDirectUdp, _btnDirectConnect });
 
         }
 
@@ -389,7 +389,7 @@ namespace RoguePyra.UI
                 AcceptButton = _ok; CancelButton = _cancel;
             }
         }
-        private async void OnDirectConnectClick(object? sender, EventArgs e)
+        /*private async void OnDirectConnectClick(object? sender, EventArgs e)
         {
             try
             {
@@ -441,7 +441,7 @@ namespace RoguePyra.UI
                 _status.Text = "Direct connect failed: " + ex.Message;
             }
             await System.Threading.Tasks.Task.CompletedTask;
-        }
+        }*/
 
     }
 }
