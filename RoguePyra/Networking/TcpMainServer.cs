@@ -217,15 +217,22 @@ public sealed class TcpMainServer
                     }
                 }
 
-                // JOIN <LobbyId>
+                // JOIN <LobbyId> [LanIp]
                 else if (line.StartsWith("JOIN ", StringComparison.OrdinalIgnoreCase))
                 {
                     var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length != 2 || !int.TryParse(parts[1], out var lobId))
+                    if (parts.Length < 2 || !int.TryParse(parts[1], out var lobId))
                     {
-                        await writer.WriteLineAsync("ERROR Usage: JOIN <LobbyId>");
+                        await writer.WriteLineAsync("ERROR Usage: JOIN <LobbyId> [LanIp]");
                         continue;
                     }
+
+                    string? lanIp = null;
+                    if (parts.Length >= 3)
+                        lanIp = parts[2];
+
+                    if (!string.IsNullOrWhiteSpace(lanIp))
+                        session.LanIp = lanIp;
 
                     if (_lobbies.TryGetValue(lobId, out var lob))
                     {
@@ -243,8 +250,7 @@ public sealed class TcpMainServer
                         {
                             lob.CurPlayers = Math.Min(lob.CurPlayers + 1, lob.MaxPlayers);
                             await writer.WriteLineAsync($"JOIN_INFO {lob.HostIp} {lob.UdpPort}");
-                            // tell everyone the counts changed
-                            await BroadcastAsync($"HOST_REGISTERED {lob.Id}", exclude: null, ct); // reuse event to trigger client refresh
+                            await BroadcastAsync($"HOST_REGISTERED {lob.Id}", exclude: null, ct);
                         }
                         else
                         {
@@ -255,8 +261,8 @@ public sealed class TcpMainServer
                     {
                         await writer.WriteLineAsync("ERROR Lobby not found");
                     }
-
                 }
+
 
 // HOST_START <LobbyId>
 else if (line.StartsWith("HOST_START ", StringComparison.OrdinalIgnoreCase))
@@ -381,7 +387,8 @@ else if (line.StartsWith("HOST_START ", StringComparison.OrdinalIgnoreCase))
         public StreamWriter Writer { get; }
         public TcpClient Tcp { get; }
 
-        // Lobby this client is currently in (null if none)
+        public string? LanIp { get; set; }
+
         public int? LobbyId { get; set; }
 
         public ClientSession(TcpClient tcp, StreamWriter writer)
@@ -390,6 +397,7 @@ else if (line.StartsWith("HOST_START ", StringComparison.OrdinalIgnoreCase))
             Writer = writer;
         }
     }
+
 
     private async Task BroadcastToLobbyAsync(int lobbyId, string line, CancellationToken ct)
     {
@@ -497,8 +505,21 @@ else if (line.StartsWith("HOST_START ", StringComparison.OrdinalIgnoreCase))
             }
 
             // Promote newHost
-            var remoteEp = (IPEndPoint)newHost.Tcp.Client.RemoteEndPoint!;
-            var newHostIp = remoteEp.Address.ToString();
+
+            // Decide which IP to advertise for the new host:
+            string newHostIp;
+
+            // Prefer the LAN IP (from JOIN) if available
+            if (!string.IsNullOrWhiteSpace(newHost.LanIp))
+            {
+                newHostIp = newHost.LanIp;
+            }
+            else
+            {
+                // Fallback: public IP from RemoteEndPoint
+                var remoteEp = (IPEndPoint)newHost.Tcp.Client.RemoteEndPoint!;
+                newHostIp = remoteEp.Address.ToString();
+            }
 
             // Create a new Lobby instance with updated HostIp
             var updatedLobby = new Lobby
@@ -512,14 +533,15 @@ else if (line.StartsWith("HOST_START ", StringComparison.OrdinalIgnoreCase))
                 InProgress = lob.InProgress
             };
 
-// Replace the lobby entry with the updated one
-_lobbies[lobId] = updatedLobby;
-_lobbyOwners[lobId] = newHost.Tcp;
+            // Replace the lobby entry with the updated one
+            _lobbies[lobId] = updatedLobby;
+            _lobbyOwners[lobId] = newHost.Tcp;
 
-Console.WriteLine($"[TCP] Lobby #{lobId} new host: {newHost.Name} @ {newHostIp}:{updatedLobby.UdpPort}");
+            Console.WriteLine($"[TCP] Lobby #{lobId} new host: {newHost.Name} @ {newHostIp}:{updatedLobby.UdpPort}");
 
-string migrateLine = $"HOST_MIGRATE {newHost.Name} {newHostIp} {updatedLobby.UdpPort}";
-await BroadcastToLobbyAsync(lobId, migrateLine, ct);
+            string migrateLine = $"HOST_MIGRATE {newHost.Name} {newHostIp} {updatedLobby.UdpPort}";
+            await BroadcastToLobbyAsync(lobId, migrateLine, ct);
+
 
         }
     }

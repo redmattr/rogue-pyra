@@ -297,7 +297,8 @@ namespace RoguePyra.UI
             }
 
             _pendingJoinLobbyId = id;
-            await _net.SendTcpLineAsync($"JOIN {id}");
+            string lanIp = GetLocalLanIp();
+            await _net.SendTcpLineAsync($"JOIN {id} {lanIp}");
             _status.Text = "Requested JOIN " + id + " …";
         }
 
