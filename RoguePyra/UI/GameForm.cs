@@ -130,15 +130,16 @@ namespace RoguePyra.UI
             {
                 try
                 {
-                    if (_isHost && _lobbyId > 0)
-                        await _net.SendTcpLineAsync($"HOST_UNREGISTER {_lobbyId}");
+                    await _net.SendTcpLineAsync("QUIT");
                 }
                 catch
                 {
                     // non-fatal
                 }
+
                 Close();
             };
+
             _topBar.Controls.Add(_btnLeave);
 
             // Host-only: Start Game
@@ -225,7 +226,27 @@ namespace RoguePyra.UI
             }
             _platforms.Sort((a, b) => a.Y.CompareTo(b.Y));
 
-            // --- Start UDP client (NO UdpGameHost here) ---
+            //
+            // --- Start UDP host if this client is the lobby creator ---
+            //
+            if (_isHost)
+            {
+                try
+                {
+                    // Start the authoritative UDP simulation on this machine.
+                    _udpHost = new UdpGameHost(_udpPort, WorldH, null);
+                    _ = _udpHost.RunAsync(_cts.Token);
+                    _status.Text = "Hosting game...";
+                }
+                catch (Exception ex)
+                {
+                    _status.Text = "Failed to start host: " + ex.Message;
+                }
+            }
+
+            //
+            // --- Start UDP client (all players, including the host) ---
+            //
             var nameForUdp = _localPlayerName ?? string.Empty;
             _udpClient = new UdpGameClient(_hostIp, _udpPort, nameForUdp);
 
@@ -233,6 +254,7 @@ namespace RoguePyra.UI
             _udpClient.WinnerAnnounced += OnWinner;
 
             _ = _udpClient.RunAsync(_cts.Token);
+
 
             // --- Render timer (~60 FPS) ---
             _renderTimer = new WinFormsTimer { Interval = 16 };

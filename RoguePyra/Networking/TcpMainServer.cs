@@ -165,23 +165,35 @@ public sealed class TcpMainServer
                     var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length < 3 || !int.TryParse(parts[2], out var udpPort))
                     {
-                        await writer.WriteLineAsync("ERROR Usage: HOST_REGISTER <LobbyName> <UdpPort> [MaxPlayers]");
+                        await writer.WriteLineAsync("ERROR Usage: HOST_REGISTER <LobbyName> <UdpPort> [MaxPlayers] [LanIp]");
                         continue;
                     }
 
-                    int maxPlayers = 8;
-                    if (parts.Length >= 4) int.TryParse(parts[3], out maxPlayers);
-
-                    var remoteEp = (IPEndPoint)tcp.Client.RemoteEndPoint!;
-                    string hostIp = remoteEp.Address.ToString();
-
                     string lobbyName = parts[1];
+
+                    // Default max players
+                    int maxPlayers = 8;
+                    if (parts.Length >= 4 && int.TryParse(parts[3], out var parsedMax))
+                        maxPlayers = parsedMax;
+
+                    // Prefer a LAN IP provided by the client, fallback to public RemoteEndPoint
+                    string hostIp;
+                    if (parts.Length >= 5)
+                    {
+                        hostIp = parts[4]; // LanIp from client
+                    }
+                    else
+                    {
+                        var remoteEp = (IPEndPoint)tcp.Client.RemoteEndPoint!;
+                        hostIp = remoteEp.Address.ToString();
+                    }
 
                     int id = AddLobby(lobbyName, hostIp, udpPort, maxPlayers, session.Tcp);
 
                     await writer.WriteLineAsync($"HOST_REGISTERED {id}");
                     Console.WriteLine($"[TCP] Lobby registered #{id} '{lobbyName}' {hostIp}:{udpPort}");
                 }
+
 
                 else if (line.StartsWith("HOST_UNREGISTER ", StringComparison.OrdinalIgnoreCase))
                 {

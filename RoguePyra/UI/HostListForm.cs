@@ -337,8 +337,12 @@ namespace RoguePyra.UI
             };
 
             _net.ChatReceived += onHostRegistered;  // hook BEFORE sending
-            await _net.SendTcpLineAsync($"HOST_REGISTER {name} {udp} {max}");
-            _status.Text = $"Hosting '{name}' on UDP {udp}. Waiting for confirmation…";
+
+            string lanIp = GetLocalLanIp();
+            await _net.SendTcpLineAsync($"HOST_REGISTER {name} {udp} {max} {lanIp}");
+
+            _status.Text = $"Hosting '{name}' on UDP {udp} (LAN {lanIp}). Waiting for confirmation…";
+
         }
 
 
@@ -389,59 +393,26 @@ namespace RoguePyra.UI
                 AcceptButton = _ok; CancelButton = _cancel;
             }
         }
-        /*private async void OnDirectConnectClick(object? sender, EventArgs e)
+
+
+        private static string GetLocalLanIp()
         {
             try
             {
-                var ipText = _tbDirectIp.Text.Trim();
-                var portText = _tbDirectUdp.Text.Trim();
-                if (string.IsNullOrWhiteSpace(ipText)) { _status.Text = "Enter an IP or hostname."; return; }
-                if (!int.TryParse(portText, out var udpPort)) udpPort = Protocol.DefaultUdpPort;
-
-                // Resolve IP or hostname
-                System.Net.IPAddress? ip;
-                if (!System.Net.IPAddress.TryParse(ipText, out ip))
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (var ip in host.AddressList)
                 {
-                    // Prefer IPv4 if available
-                    var addrs = System.Net.Dns.GetHostAddresses(ipText);
-                    ip = addrs.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                        ?? addrs.FirstOrDefault();
-                    if (ip == null) { _status.Text = "Could not resolve host."; return; }
+                    if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        return ip.ToString();
                 }
-
-                // Ensure we have a NetworkManager (it can do UDP without TCP)
-                if (_net == null)
-                {
-                    _net = new NetworkManager();
-                    _net.ChatReceived += OnTcpLine;
-                    _net.Error += s => BeginInvoke(new Action(() => _status.Text = "Error: " + s));
-                    _netOwned = true; // HostListForm owns it unless GameForm takes it
-                }
-
-                _status.Text = $"Direct connecting to {ip}:{udpPort} …";
-
-                
-                if (string.IsNullOrWhiteSpace(_playerName))
-                {
-                    _playerName = string.IsNullOrWhiteSpace(_tbPlayerName.Text)
-                        ? "Player" + Random.Shared.Next(1000, 9999)
-                        : _tbPlayerName.Text.Trim();
-                }
-
-                
-                
-                
-                // Open the game view
-                var gf = new GameForm(ip, udpPort, _net, isHost: false, lobbyId: 0, localPlayerId: _playerName);
-                _netOwned = false;
-                gf.Show();
             }
-            catch (Exception ex)
+            catch
             {
-                _status.Text = "Direct connect failed: " + ex.Message;
+                // ignore and fall through
             }
-            await System.Threading.Tasks.Task.CompletedTask;
-        }*/
+            return "127.0.0.1"; // fallback, shouldn't matter on LAN
+        }
+
 
     }
 }
