@@ -103,10 +103,19 @@ private readonly Dictionary<string, Player> _playersById =
     /// Returns when the token is cancelled.
     public async Task RunAsync(CancellationToken ct)
     {
-        var recvTask = Task.Run(() => ReceiveLoop(ct), ct);
-        var simTask  = Task.Run(() => SimLoop(ct), ct);
-        await Task.WhenAny(recvTask, simTask);
+        try
+        {
+            var recvTask = Task.Run(() => ReceiveLoop(ct), ct);
+            var simTask  = Task.Run(() => SimLoop(ct), ct);
+            await Task.WhenAny(recvTask, simTask);
+        }
+        finally
+        {
+            // Ensure the UDP socket is released when the host stops
+            try { _udp.Close(); } catch { }
+        }
     }
+
 
     // -----------------------------------------------------------------------------
     // INPUT receiver

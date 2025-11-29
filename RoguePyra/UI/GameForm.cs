@@ -130,15 +130,26 @@ namespace RoguePyra.UI
             {
                 try
                 {
-                    await _net.SendTcpLineAsync("QUIT");
+                    if (_isHost && _lobbyId > 0)
+                    {
+                        // Tell the server this lobby is gone
+                        await _net.SendTcpLineAsync($"HOST_UNREGISTER {_lobbyId}");
+                    }
+                    else if (_lobbyId > 0)
+                    {
+                        // If you have a LEAVE_LOBBY command, use it.
+                        await _net.SendTcpLineAsync($"LEAVE_LOBBY {_lobbyId}");
+                    }
+                    // Do NOT send QUIT here; keep TCP alive.
                 }
                 catch
                 {
                     // non-fatal
                 }
 
-                Close();
+                Close(); // closes GameForm; HostListForm and NetworkManager live on
             };
+
 
             _topBar.Controls.Add(_btnLeave);
 

@@ -101,10 +101,19 @@ public sealed class UdpGameClient
     /// Cancels when the provided token is signaled.
     public async Task RunAsync(CancellationToken ct)
     {
-        var recvTask = Task.Run(() => ReceiveLoop(ct), ct);
-        var sendTask = Task.Run(() => SendInputsLoop(ct), ct);
-        await Task.WhenAny(recvTask, sendTask);
+        try
+        {
+            var recvTask = Task.Run(() => ReceiveLoop(ct), ct);
+            var sendTask = Task.Run(() => SendInputsLoop(ct), ct);
+            await Task.WhenAny(recvTask, sendTask);
+        }
+        finally
+        {
+            // Release the client's UDP socket
+            try { _udp.Close(); } catch { }
+        }
     }
+
 
     // -------------------------------------------------------------------------
     // INPUT handling

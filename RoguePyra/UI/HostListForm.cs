@@ -310,41 +310,57 @@ namespace RoguePyra.UI
         {
             if (_net == null) return;
 
-            using var dlg = new CreateLobbyDialog();
-            if (dlg.ShowDialog(this) != DialogResult.OK) return;
-
-            string name = dlg.LobbyName;
-            int udp = dlg.UdpPort;
-            int max = dlg.MaxPlayers;
-
-            // One-time listener to catch HOST_REGISTERED and store the ID
-            Action<string>? onHostRegistered = null;
-            onHostRegistered = line =>
+            try
             {
-                if (!line.StartsWith("HOST_REGISTERED ", StringComparison.OrdinalIgnoreCase)) return;
+                using var dlg = new CreateLobbyDialog();
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
 
-                var idStr = line.Substring(16).Trim();
-                if (int.TryParse(idStr, out var lobbyId))
+                string name = dlg.LobbyName;
+                int udp   = dlg.UdpPort;
+                int max   = dlg.MaxPlayers;
+
+                // One-time listener to catch HOST_REGISTERED and store the ID
+                Action<string>? onHostRegistered = null;
+                onHostRegistered = line =>
                 {
-                    _lastHostedLobbyId = lobbyId;
-                    // stop listening after we captured it
-                    _net!.ChatReceived -= onHostRegistered!;
-                    BeginInvoke(new Action(() =>
+                    if (!line.StartsWith("HOST_REGISTERED ", StringComparison.OrdinalIgnoreCase))
+                        return;
+
+                    var idStr = line.Substring("HOST_REGISTERED ".Length).Trim();
+                    if (int.TryParse(idStr, out var lobbyId))
                     {
-                        _status.Text = $"Lobby created (ID {lobbyId}).";
-                        RequestLobbyList();
-                    }));
-                }
-            };
+                        _lastHostedLobbyId = lobbyId;
 
-            _net.ChatReceived += onHostRegistered;  // hook BEFORE sending
+                        // stop listening after we captured it
+                        _net!.ChatReceived -= onHostRegistered!;
 
-            string lanIp = GetLocalLanIp();
-            await _net.SendTcpLineAsync($"HOST_REGISTER {name} {udp} {max} {lanIp}");
+                        BeginInvoke(new Action(() =>
+                        {
+                            _status.Text = $"Lobby created (ID {lobbyId}).";
+                            RequestLobbyList();
+                        }));
+                    }
+                };
 
-            _status.Text = $"Hosting '{name}' on UDP {udp} (LAN {lanIp}). Waiting for confirmation…";
+                // Hook BEFORE sending the register command
+                _net.ChatReceived += onHostRegistered!;
 
+                string lanIp = GetLocalLanIp();
+                await _net.SendTcpLineAsync($"HOST_REGISTER {name} {udp} {max} {lanIp}");
+
+                _status.Text = $"Hosting '{name}' on UDP {udp} (LAN {lanIp}). Waiting for confirmation…";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this,
+                    "Disconnected from server. Please reconnect.\n\n" + ex.Message,
+                    "Connection Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
+
 
 
 
