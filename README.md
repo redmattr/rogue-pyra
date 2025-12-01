@@ -28,14 +28,20 @@ dotnet clean
 dotnet build
 ```
 
-## Start the main TCP server (chat + lobby registry)
-dotnet run -- --server --bind 0.0.0.0 --tcpport 5000
+## Start the main TCP server (registers host lobbies and displays them to clients)
+```powershell
+dotnet run --server --ip 0.0.0.0 --port 5000
+```
 
 ## Start the UDP Game Host (game simulation)
-dotnet run -- --host --udpport 6000
+```powershell
+dotnet run --host --port 6000
+```
 
-## Start a visual client window
-dotnet run -- --clientviz
+## Start a visual client window (used to join and create lobbies)
+```powershell
+dotnet run --client
+```
 
 # Then in the Host List Window:
 Then in the Host List window:
@@ -45,7 +51,6 @@ Click Connect
 Click Refresh
 Select your lobby and click Join Selected
 
-  
 The host logs `INPUT` packets, and sends back `SNAPSHOT` packets → the client updates.
 
 # Controls
