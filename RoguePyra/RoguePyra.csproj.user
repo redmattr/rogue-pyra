@@ -16,7 +16,13 @@
     <Compile Update="UI\HostListForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="UI\MainMenuForm.cs">
+    <Compile Update="UI\HostListScreen.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="UI\MainMenuScreen.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="UI\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

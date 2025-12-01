@@ -61,10 +61,10 @@ internal static class Program {
 				return;
 			case ProgramMode.host:
 				int hostPort = ParseInt(GetArg(args, "--port"), Protocol.DefaultUdpPort);
-				await RunUdpHostAsync(hostPort, cts.Token);
+				await RunHostAsync(hostPort, cts.Token);
 				return;
 			case ProgramMode.client:
-				RunClientVisualizer();
+				RunClient();
 				return;
 			case ProgramMode.devbox:
 				RunDevBox();
@@ -87,7 +87,7 @@ internal static class Program {
 		Console.WriteLine("[ENTRY] TCP server stopped.");
 	}
 
-	private static async Task RunUdpHostAsync(int port, CancellationToken ct) {
+	private static async Task RunHostAsync(int port, CancellationToken ct) {
 		UdpGameHost host = new(port);
 		Console.WriteLine($"[ENTRY] Starting UDP host on 0.0.0.0:{port}  (Ctrl+C to stop)");
 		await host.RunAsync(ct);
@@ -95,10 +95,10 @@ internal static class Program {
 	}
 
 	// WinForms entry: show the main menu → host list → game form
-	private static void RunClientVisualizer() {
+	private static void RunClient() {
 		Console.WriteLine($"[ENTRY] Launching main form.");
 		Application.EnableVisualStyles();
-		Application.Run(new MainMenuForm());
+		Application.Run(new MainForm());
 		Console.WriteLine("[ENTRY] Client closed.");
 	}
 

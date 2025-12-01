@@ -12,17 +12,17 @@ using RoguePyra.Networking;
 
 namespace RoguePyra.UI {
 	public sealed class HostListForm : Form {
-		private readonly TextBox _tbServerIp;
-		private readonly TextBox _tbTcpPort;
-		private readonly TextBox _tbPlayerName;
-		private readonly Button _btnConnect;
-		private readonly Button _btnRefresh;
-		private readonly Button _btnJoin;
-		private readonly Button _btnCreate;
+		private readonly TextBox _tbServerIp;	// Textbox for inputting IP of the server to use.
+		private readonly TextBox _tbTcpPort;	// Textbox for inputting port of the server to use.
+		private readonly TextBox _tbPlayerName;	// Textbox for inputting the client's player name.
+		private readonly Button _btnConnect;	// Button to attempt connection to the specified server.
+		private readonly Button _btnRefresh;	// TODO: description.
+		private readonly Button _btnJoin;		// Joins the highlighted lobby from the list provided by the connected server.
+		private readonly Button _btnCreate;		// Creates a new lobby, spawning a host process (logical node) on the client's machine, then connects the client to that lobby.
 		private bool _netOwned = true;
 
-		private readonly ListView _lvLobbies; // columns: Id, Name, IP, UdpPort, Max, Cur, InProg
-		private readonly Label _status;
+		private readonly ListView _lvLobbies;	// List of lobbies registered with the connected server. Columns: Id, Name, IP, UdpPort, Max, Cur, InProg.
+		private readonly Label _status;			// Displays messages relating to the most recent action.
 
 		private NetworkManager? _net;  // used here only for TCP
 		private int _expectLobbyLines = 0;
@@ -34,9 +34,9 @@ namespace RoguePyra.UI {
 
 		public HostListForm() {
 			Text = "RoguePyra — Host List";
-			ClientSize = new Size(800, 480);
+			ClientSize = new Size(1680, 1050);
 			StartPosition = FormStartPosition.CenterScreen;
-			FormBorderStyle = FormBorderStyle.Sizable;
+			FormBorderStyle = FormBorderStyle.FixedSingle;
 			MaximizeBox = false;
 			BackColor = Color.White;
 
