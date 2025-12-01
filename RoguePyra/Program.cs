@@ -28,7 +28,7 @@ namespace RoguePyra {
 		enum ProgramMode { notSet, server, host, clientCLI, clientViz, devbox } // Possible program modes.
 
 		// We only need STAThread when launching WinForms (clientviz), but it doesn't hurt to have it here for the whole program.
-		[STAThread]
+        [STAThread]
 		private static async Task Main(string[] args) {
 
 			// Determine program mode to run in.
@@ -44,7 +44,10 @@ namespace RoguePyra {
 				if (modeMap.TryGetValue(arg, out ProgramMode mode)) { // Only executes if arg is a valid key.
 					if (programMode != ProgramMode.notSet) { PrintHelp("Error: multiple program modes specified."); return; } // Errors help info and exits if mode is already set.
 					else programMode = mode;
-				}
+			}
+			if (args.Contains("--clientviz", StringComparer.OrdinalIgnoreCase)) {
+				if (programMode == ProgramMode.notSet) programMode = ProgramMode.clientViz;
+				else { PrintHelp("Error: multiple program modes specified."); return; }
 			}
 			if (programMode == ProgramMode.notSet) { PrintHelp("Error: no program mode specified."); return; }
 
@@ -86,16 +89,16 @@ namespace RoguePyra {
 					PrintHelp("Unknown logic error. This code should be unreachable, please notify the developers.");
 					return;
 			}
-		}
+        }
 
-		// --- Mode runners ------------------------------------------------------
+        // --- Mode runners ------------------------------------------------------
 
 		private static async Task RunServerAsync(IPAddress ip, int port, CancellationToken ct) {
 			TcpMainServer server = new(ip, port);
 			Console.WriteLine($"[ENTRY] Starting TCP server on {ip}:{port}  (Ctrl+C to stop)");
-			await server.RunAsync(ct);
+            await server.RunAsync(ct);
 			Console.WriteLine("[ENTRY] TCP server stopped.");
-		}
+        }
 
 		private static async Task RunUdpHostAsync(int port, CancellationToken ct) {
 			UdpGameHost host = new(port);
@@ -108,29 +111,29 @@ namespace RoguePyra {
 		private static async Task RunClientCLIAsync(string name, IPAddress hostIp, int port, CancellationToken ct) {
 			TcpClientApp client = new(name, hostIp.ToString(), port);
 			Console.WriteLine($"[ENTRY] Starting TCP console client to {hostIp}:{port} as '{name}'  (type /quit to exit)");
-			await client.RunAsync(ct);
+            await client.RunAsync(ct);
 			Console.WriteLine("[ENTRY] TCP console client stopped.");
-		}
+        }
 
-		// WinForms entry: show the main menu → host list → game form
+        // WinForms entry: show the main menu → host list → game form
 		private static void RunClientVisualizer() {
 			Console.WriteLine($"[ENTRY] Launching main form.");
-			Application.EnableVisualStyles();
-			Application.Run(new MainMenuForm());
+            Application.EnableVisualStyles();
+            Application.Run(new MainMenuForm());
 			Console.WriteLine("[ENTRY] Client closed.");
-		}
+        }
 
 		private static void RunDevBox() {
-			Console.WriteLine($"[ENTRY] Starting Physics Box...");
-			Application.EnableVisualStyles();
-			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new RoguePyra.Physics.PhysicsBox());
-			Console.WriteLine($"[ENTRY] Physics Box Stopped.");
-		}
+            Console.WriteLine($"[ENTRY] Starting Physics Box...");
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new RoguePyra.Physics.PhysicsBox());
+            Console.WriteLine($"[ENTRY] Physics Box Stopped.");
+        }
 
-		// -----------------------------------------------------------------------------
+        // -----------------------------------------------------------------------------
 		// Helpers
-		// -----------------------------------------------------------------------------
+        // -----------------------------------------------------------------------------
 
 		// Returns the value after the specified argument, or null if not found.
 		private static string? GetArg(string[] args, string name) {
@@ -148,17 +151,17 @@ namespace RoguePyra {
 		// Prints info about the program arguments, with a preceeding message if specified.
 		private static void PrintHelp(string? message = null) {
 			if (message != null) Console.WriteLine(message + '\n');
-			Console.WriteLine("RoguePyra — modes:");
+            Console.WriteLine("RoguePyra — modes:");
 			Console.WriteLine("  --server      [--ip <ip>] [--port <p>]");
 			Console.WriteLine("  --host        [--port <p>]");
 			Console.WriteLine("  --clientcli   --name <n> --hostip <ip> [--port <p>]");
 			Console.WriteLine("  --clientviz   (launches WinForms menu)");
 			Console.WriteLine();
-			Console.WriteLine("Examples:");
+            Console.WriteLine("Examples:");
 			Console.WriteLine("  dotnet run --server --ip 0.0.0.0 --port 5000");
 			Console.WriteLine("  dotnet run --host --port 6000");
 			Console.WriteLine("  dotnet run --clientcli --name Alice --hostip 127.0.0.1 --port 5000");
 			Console.WriteLine("  dotnet run --clientviz");
-		}
-	}
+        }
+    }
 }

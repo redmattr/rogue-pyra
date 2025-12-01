@@ -122,6 +122,8 @@ namespace RoguePyra.Networking
         public event Action<string>? LineReceived;  // emits raw lines from server
         public event Action<string>? Error;
 
+        public bool IsConnected { get; private set; } = true;
+
         public TcpChatClient(string name, string host, int port)
         {
             _name = string.IsNullOrWhiteSpace(name) ? $"Player{Random.Shared.Next(1000,9999)}" : name.Trim();
@@ -158,8 +160,10 @@ namespace RoguePyra.Networking
                 }
                 catch (Exception ex)
                 {
-                    Error?.Invoke(ex.Message);
+                    IsConnected = false;
+                    Error?.Invoke("Disconnected: " + ex.Message);
                 }
+
             }, ct);
         }
 

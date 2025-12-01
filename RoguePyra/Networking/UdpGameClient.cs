@@ -43,6 +43,9 @@ public sealed class UdpGameClient
     ///  Winner id when a WIN packet is received; null otherwise
     public string? WinnerId { get; private set; }
 
+    // This client's own UDP endpoint string, e.g. "192.168.0.12:54321"
+    public string LocalId { get; }
+
     /// Snapshot of entities keyed by player id.
     /// Tuple = (x, y, hp)
     public readonly Dictionary<string, (float x, float y, int hp)> Entities = new();
@@ -50,6 +53,7 @@ public sealed class UdpGameClient
     // ------------ Networking ------------
     private readonly UdpClient _udp;
     private readonly IPEndPoint _hostEp;
+    private readonly string _playerName;
 
     // ------------ Input state ------------
     private int _seq = 0;
@@ -63,22 +67,48 @@ public sealed class UdpGameClient
     /// Fired when a WIN packet is rec
     public event Action<string>? WinnerAnnounced;
 
-    public UdpGameClient(IPAddress hostIp, int udpPort = Protocol.DefaultUdpPort)
+    // Identity: string representation of this client's local UDP endpoint.
+    // This matches the Id the host uses for this client.
+    public string LocalEndpointId { get; }
+
+
+    public UdpGameClient(IPAddress hostIp, int udpPort, string playerName)
     {
         _udp = new UdpClient(0); // bind to ephemeral local port
         _udp.Client.ReceiveTimeout = 0;
 
         _hostEp = new IPEndPoint(hostIp, udpPort);
-        Console.WriteLine($"[CliUDP] Local {((IPEndPoint)_udp.Client.LocalEndPoint!).ToString()} → Host {_hostEp}");
+
+        // Normalize / fallback name a bit
+        _playerName = string.IsNullOrWhiteSpace(playerName)
+            ? $"Player{Random.Shared.Next(1000, 9999)}"
+            : playerName.Trim();
+
+        var localEp = (IPEndPoint)_udp.Client.LocalEndPoint!;
+        Console.WriteLine($"[CliUDP] Local {localEp} → Host {_hostEp} (name={_playerName})");
+    }
+
+    // Backward-compatible ctor for old callers that don’t care about name yet
+    public UdpGameClient(IPAddress hostIp, int udpPort = Protocol.DefaultUdpPort)
+        : this(hostIp, udpPort, $"Player{Random.Shared.Next(1000, 9999)}")
+    {
     }
 
     /// Starts the receive (SNAPSHOT/WIN) and send (INPUT) loops.
     /// Cancels when the provided token is signaled.
     public async Task RunAsync(CancellationToken ct)
     {
-        var recvTask = Task.Run(() => ReceiveLoop(ct), ct);
-        var sendTask = Task.Run(() => SendInputsLoop(ct), ct);
-        await Task.WhenAny(recvTask, sendTask);
+        try
+        {
+            var recvTask = Task.Run(() => ReceiveLoop(ct), ct);
+            var sendTask = Task.Run(() => SendInputsLoop(ct), ct);
+            await Task.WhenAny(recvTask, sendTask);
+        }
+        finally
+        {
+            // Release the client's UDP socket
+            try { _udp.Close(); } catch { }
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -104,10 +134,18 @@ public sealed class UdpGameClient
         while (!ct.IsCancellationRequested)
         {
             int ms = (int)_sw.ElapsedMilliseconds;
-            string payload = Protocol.BuildInput(_seq++, _keys, ms);
-            byte[] bytes = Encoding.UTF8.GetBytes(payload);
 
-            try { await _udp.SendAsync(bytes, bytes.Length, _hostEp); } catch { /* ignore transient send errors */ }
+            // 1) Identify ourselves to the host
+            string hello = $"HELLOUDP:{_playerName}";
+            byte[] helloBytes = Encoding.UTF8.GetBytes(hello);
+            try { await _udp.SendAsync(helloBytes, helloBytes.Length, _hostEp); }
+            catch { /* ignore transient send errors */ }
+
+            // 2) Normal INPUT packet
+            string input = Protocol.BuildInput(_seq++, _keys, ms);
+            byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+            try { await _udp.SendAsync(inputBytes, inputBytes.Length, _hostEp); }
+            catch { /* ignore transient send errors */ }
 
             // 20 Hz input cadence (~50ms). Adjust if needed.
             await Task.Delay(50, ct);

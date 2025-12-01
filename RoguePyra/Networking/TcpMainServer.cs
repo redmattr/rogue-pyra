@@ -63,6 +63,9 @@ public sealed class TcpMainServer
     // Lobby registry in memory (id → Lobby)
     private readonly ConcurrentDictionary<int, Lobby> _lobbies = new();
     private int _nextLobbyId = 0;
+    private readonly ConcurrentDictionary<int, TcpClient> _lobbyOwners = new();
+    // Lobby membership (id → set of connected sessions that joined that lobby)
+    private readonly ConcurrentDictionary<int, HashSet<ClientSession>> _lobbyMembers = new();
 
     public TcpMainServer(IPAddress bindIp, int tcpPort = Protocol.DefaultTcpPort)
     {
@@ -99,7 +102,8 @@ public sealed class TcpMainServer
     private async Task HandleClientAsync(TcpClient tcp, CancellationToken ct)
     {
         tcp.NoDelay = true;
-        Console.WriteLine("[TCP] Client connected");
+        var remote = (System.Net.IPEndPoint)tcp.Client.RemoteEndPoint!;
+        Console.WriteLine($"[TCP] Client connected from {remote.Address}:{remote.Port}");
 
         using var stream = tcp.GetStream();
         using var reader = new StreamReader(stream, Encoding.UTF8, false, 1024, leaveOpen: true);
@@ -151,25 +155,39 @@ public sealed class TcpMainServer
                 }
                 else if (line.StartsWith("HOST_REGISTER ", StringComparison.OrdinalIgnoreCase))
                 {
-                    // HOST_REGISTER <LobbyName> <UdpPort> [MaxPlayers]
                     var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length < 3 || !int.TryParse(parts[2], out var udpPort))
                     {
-                        await writer.WriteLineAsync("ERROR Usage: HOST_REGISTER <LobbyName> <UdpPort> [MaxPlayers]");
+                        await writer.WriteLineAsync("ERROR Usage: HOST_REGISTER <LobbyName> <UdpPort> [MaxPlayers] [LanIp]");
                         continue;
                     }
 
-                    int maxPlayers = 8;
-                    if (parts.Length >= 4) int.TryParse(parts[3], out maxPlayers);
-
-                    var remoteEp = (IPEndPoint)tcp.Client.RemoteEndPoint!;
-                    string hostIp = remoteEp.Address.ToString();
-
                     string lobbyName = parts[1];
-                    int id = AddLobby(lobbyName, hostIp, udpPort, maxPlayers);
+
+                    // Default max players
+                    int maxPlayers = 8;
+                    if (parts.Length >= 4 && int.TryParse(parts[3], out var parsedMax))
+                        maxPlayers = parsedMax;
+
+                    // Prefer a LAN IP provided by the client, fallback to public RemoteEndPoint
+                    string hostIp;
+                    if (parts.Length >= 5)
+                    {
+                        hostIp = parts[4]; // LanIp from client
+                    }
+                    else
+                    {
+                        var remoteEp = (IPEndPoint)tcp.Client.RemoteEndPoint!;
+                        hostIp = remoteEp.Address.ToString();
+                    }
+
+                    int id = AddLobby(lobbyName, hostIp, udpPort, maxPlayers, session.Tcp);
+
                     await writer.WriteLineAsync($"HOST_REGISTERED {id}");
                     Console.WriteLine($"[TCP] Lobby registered #{id} '{lobbyName}' {hostIp}:{udpPort}");
                 }
+
+
                 else if (line.StartsWith("HOST_UNREGISTER ", StringComparison.OrdinalIgnoreCase))
                 {
                     var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -183,26 +201,90 @@ public sealed class TcpMainServer
                     {
                         await writer.WriteLineAsync($"HOST_UNREGISTERED {lobId}");
                         Console.WriteLine($"[TCP] Lobby unregistered #{lobId}");
+
+                        await BroadcastAsync($"HOST_UNREGISTERED {lobId}", exclude: null, ct);
                     }
                     else
                     {
                         await writer.WriteLineAsync("ERROR Lobby not found");
                     }
                 }
+
+                // JOIN <LobbyId> [LanIp]
                 else if (line.StartsWith("JOIN ", StringComparison.OrdinalIgnoreCase))
                 {
                     var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length != 2 || !int.TryParse(parts[1], out var lobId))
+                    if (parts.Length < 2 || !int.TryParse(parts[1], out var lobId))
                     {
-                        await writer.WriteLineAsync("ERROR Usage: JOIN <LobbyId>");
+                        await writer.WriteLineAsync("ERROR Usage: JOIN <LobbyId> [LanIp]");
                         continue;
                     }
 
+                    string? lanIp = null;
+                    if (parts.Length >= 3)
+                        lanIp = parts[2];
+
+                    if (!string.IsNullOrWhiteSpace(lanIp))
+                        session.LanIp = lanIp;
+
                     if (_lobbies.TryGetValue(lobId, out var lob))
-                        await writer.WriteLineAsync($"JOIN_INFO {lob.HostIp} {lob.UdpPort}");
+                    {
+                        // Track this client's lobby membership
+                        session.LobbyId = lobId;
+                        var members = _lobbyMembers.GetOrAdd(lobId, _ => new HashSet<ClientSession>());
+                        lock (members)
+                        {
+                            members.Add(session);
+                        }
+
+                        // Reject joining locked/started lobbies (for counts),
+                        // but still allow JOIN_INFO so they can spectate or late-join.
+                        if (!lob.InProgress)
+                        {
+                            lob.CurPlayers = Math.Min(lob.CurPlayers + 1, lob.MaxPlayers);
+                            await writer.WriteLineAsync($"JOIN_INFO {lob.HostIp} {lob.UdpPort}");
+                            await BroadcastAsync($"HOST_REGISTERED {lob.Id}", exclude: null, ct);
+                        }
+                        else
+                        {
+                            await writer.WriteLineAsync($"JOIN_INFO {lob.HostIp} {lob.UdpPort}");
+                        }
+                    }
                     else
+                    {
                         await writer.WriteLineAsync("ERROR Lobby not found");
+                    }
                 }
+
+
+// HOST_START <LobbyId>
+else if (line.StartsWith("HOST_START ", StringComparison.OrdinalIgnoreCase))
+{
+    var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    if (parts.Length != 2 || !int.TryParse(parts[1], out var lobId))
+    {
+        await writer.WriteLineAsync("ERROR Usage: HOST_START <LobbyId>");
+        continue;
+    }
+
+    if (_lobbies.TryGetValue(lobId, out var lob))
+    {
+        if (lob.InProgress)
+        {
+            await writer.WriteLineAsync("ERROR Already started");
+        }
+        else
+        {
+            lob.InProgress = true; // lock it
+            Console.WriteLine($"[TCP] Lobby #{lob.Id} '{lob.Name}' locked/started");
+            await BroadcastAsync($"LOBBY_LOCKED {lob.Id}", exclude: null, ct);
+        }
+    }
+    else
+    {
+        await writer.WriteLineAsync("ERROR Lobby not found");
+    }
+}
                 else
                 {
                     await writer.WriteLineAsync("ERROR Unknown command");
@@ -214,16 +296,28 @@ public sealed class TcpMainServer
         finally
         {
             _clients.TryRemove(tcp, out _);
+
+            // Remove from lobby membership and handle host migration if needed
+            try
+            {
+                await HandleClientDisconnectedAsync(session, ct);
+            }
+            catch
+            {
+                // swallow errors during cleanup
+            }
+
             Console.WriteLine($"[TCP] {(session.Name ?? "Client")} disconnected");
             await BroadcastAsync($"INFO {session.Name} left.", exclude: null, ct);
             try { tcp.Close(); } catch { }
         }
+
     }
 
     // -------------------------------------------------------------------------
     // Lobby helpers
     // -------------------------------------------------------------------------
-    private int AddLobby(string name, string ip, int udpPort, int maxPlayers)
+    private int AddLobby(string name, string ip, int udpPort, int maxPlayers, TcpClient owner)
     {
         var id = Interlocked.Increment(ref _nextLobbyId);
         _lobbies[id] = new Lobby
@@ -236,6 +330,7 @@ public sealed class TcpMainServer
             CurPlayers = 0,
             InProgress = false
         };
+        _lobbyOwners[id] = owner;  // remember who owns this lobby
         return id;
     }
 
@@ -283,10 +378,180 @@ public sealed class TcpMainServer
         public StreamWriter Writer { get; }
         public TcpClient Tcp { get; }
 
+        public string? LanIp { get; set; }
+
+        public int? LobbyId { get; set; }
+
         public ClientSession(TcpClient tcp, StreamWriter writer)
         {
             Tcp = tcp;
             Writer = writer;
         }
     }
+
+
+    private async Task BroadcastToLobbyAsync(int lobbyId, string line, CancellationToken ct)
+    {
+        if (!_lobbyMembers.TryGetValue(lobbyId, out var members))
+            return;
+
+        List<ClientSession> snapshot;
+        lock (members)
+        {
+            snapshot = new List<ClientSession>(members);
+        }
+
+        foreach (var session in snapshot)
+        {
+            try
+            {
+                await session.Writer.WriteLineAsync(line);
+            }
+            catch
+            {
+                // ignore broken pipes
+            }
+        }
+    }
+
+
+    private async Task HandleClientDisconnectedAsync(ClientSession session, CancellationToken ct)
+    {
+        // Remove from lobby members and adjust counts
+        if (session.LobbyId is int lobId)
+        {
+            if (_lobbyMembers.TryGetValue(lobId, out var members))
+            {
+                lock (members)
+                {
+                    members.Remove(session);
+                }
+            }
+
+            if (_lobbies.TryGetValue(lobId, out var lob))
+            {
+                if (lob.CurPlayers > 0)
+                    lob.CurPlayers--;
+            }
+        }
+
+        // If this client owned any lobbies, migrate or remove them
+        await HandleLobbiesOwnedByAsync(session.Tcp, session, ct);
+    }
+
+
+
+
+
+    // Handle all lobbies owned by this client when they disconnect:
+    // - If lobby has no other members → remove it and broadcast HOST_UNREGISTERED
+    // - If lobby has members → promote one as new host and send HOST_MIGRATE
+    private async Task HandleLobbiesOwnedByAsync(TcpClient owner, ClientSession ownerSession, CancellationToken ct)
+    {
+        var ownedLobbyIds = new List<int>();
+        foreach (var kv in _lobbyOwners)
+        {
+            if (kv.Value == owner)
+                ownedLobbyIds.Add(kv.Key);
+        }
+
+        foreach (var lobId in ownedLobbyIds)
+        {
+            if (!_lobbies.TryGetValue(lobId, out var lob))
+                continue;
+
+            // Get membership for this lobby
+            if (!_lobbyMembers.TryGetValue(lobId, out var members))
+            {
+                // No membership info -> just remove the lobby
+                _lobbyOwners.TryRemove(lobId, out _);
+                _lobbies.TryRemove(lobId, out _);
+                Console.WriteLine($"[TCP] Auto-unlisted lobby #{lobId} (no members)");
+                await BroadcastAsync($"HOST_UNREGISTERED {lobId}", exclude: null, ct);
+                continue;
+            }
+
+            ClientSession? newHost = null;
+            lock (members)
+            {
+                // Remove owner from members (if present)
+                members.Remove(ownerSession);
+
+                // Pick the first remaining member (if any) as new host
+                foreach (var m in members)
+                {
+                    newHost = m;
+                    break;
+                }
+            }
+
+            if (newHost == null)
+            {
+                // No one left to host → remove lobby
+                _lobbyOwners.TryRemove(lobId, out _);
+                _lobbies.TryRemove(lobId, out _);
+                Console.WriteLine($"[TCP] Auto-unlisted lobby #{lobId} (no members after host left)");
+                await BroadcastAsync($"HOST_UNREGISTERED {lobId}", exclude: null, ct);
+                continue;
+            }
+
+            // Promote newHost
+
+            // Decide which IP to advertise for the new host:
+            string newHostIp;
+
+            // Prefer the LAN IP (from JOIN) if available
+            if (!string.IsNullOrWhiteSpace(newHost.LanIp))
+            {
+                newHostIp = newHost.LanIp;
+            }
+            else
+            {
+                // Fallback: public IP from RemoteEndPoint
+                var remoteEp = (IPEndPoint)newHost.Tcp.Client.RemoteEndPoint!;
+                newHostIp = remoteEp.Address.ToString();
+            }
+
+            // Create a new Lobby instance with updated HostIp
+            var updatedLobby = new Lobby
+            {
+                Id         = lob.Id,
+                Name       = lob.Name,
+                HostIp     = newHostIp,
+                UdpPort    = lob.UdpPort,
+                MaxPlayers = lob.MaxPlayers,
+                CurPlayers = lob.CurPlayers,
+                InProgress = lob.InProgress
+            };
+
+            // Replace the lobby entry with the updated one
+            _lobbies[lobId] = updatedLobby;
+            _lobbyOwners[lobId] = newHost.Tcp;
+
+            Console.WriteLine($"[TCP] Lobby #{lobId} new host: {newHost.Name} @ {newHostIp}:{updatedLobby.UdpPort}");
+
+            string migrateLine = $"HOST_MIGRATE {newHost.Name} {newHostIp} {updatedLobby.UdpPort}";
+            await BroadcastToLobbyAsync(lobId, migrateLine, ct);
+
+
+        }
+    }
+
+
+
+    private async Task RemoveLobbiesOwnedByAsync(TcpClient owner, CancellationToken ct)
+    {
+        foreach (var kv in _lobbyOwners)
+        {
+            if (kv.Value == owner)
+            {
+                var lobId = kv.Key;
+                _lobbyOwners.TryRemove(lobId, out _);
+                _lobbies.TryRemove(lobId, out _);
+                Console.WriteLine($"[TCP] Auto-unlisted lobby #{lobId} (owner disconnected)");
+                await BroadcastAsync($"HOST_UNREGISTERED {lobId}", exclude: null, ct);
+            }
+        }
+    }
+
 }

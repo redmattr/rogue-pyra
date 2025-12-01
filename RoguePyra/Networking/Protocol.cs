@@ -65,6 +65,14 @@ public static class Protocol
     // SNAPSHOT:<seq>:<lavaY>:<n>;<id>|<x>|<y>|<hp>;...
     // WIN:<id>
 
+    // -------------------------------------------------------------------------
+    // Extra lobby commands (Nov 2025 additions)
+    // -------------------------------------------------------------------------
+    // HOST_START <LobbyId>     (host → server)
+    // LOBBY_LOCKED <LobbyId>   (server → all clients; lobby locked, game started)
+    // ERROR_GAME_STARTED        (server → client trying to join locked lobby)
+
+
     // We keep a couple of separators in one place to avoid typos.
     private const char Colon = ':';
     private const char Pipe  = '|';
