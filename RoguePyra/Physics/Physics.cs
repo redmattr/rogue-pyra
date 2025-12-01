@@ -1,4 +1,4 @@
-﻿﻿// -----------------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------------
 // Physics.cs  (place in: Physics/) WIP
 // -----------------------------------------------------------------------------
 // Purpose
@@ -9,18 +9,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Numerics;
-using System.Reflection.Metadata.Ecma335;
 using RoguePyra.Entity;
 
-namespace RoguePyra.Physics
-{
-    //Placeholder class for entity
-    /*
-   public class Entities : CollisionObj
+namespace RoguePyra.Physics {
+	// Placeholder class for entity
+	/*
+    public class Entities : CollisionObj
     {
         public Vector2 Position { get; set; } //Getter|Setter for entity position
         public Vector2 Velocity { get; set; } //Vector Velocity for approximate movement
@@ -36,55 +31,48 @@ namespace RoguePyra.Physics
     }
     */
 
-    public sealed class Physics
-    {
-        //List that holds all entity objects
-        private List<EntityPhysical> entObj = new List<EntityPhysical>();
-        //Vector definition for gravity
-        private Vector2 _grav = new Vector2(0, 9.81f);
-        private int SubSteps { get; set; } = 2;
-        private float Time { get; set; } = 0f;
-        private float Frame = 0f;
+	internal sealed class Physics {
+		//List that holds all entity objects
+		private List<EntityPhysical> entObj = new List<EntityPhysical>();
+		//Vector definition for gravity
+		private Vector2 _grav = new Vector2(0, 9.81f);
+		private int SubSteps { get; set; } = 2;
+		private float Time { get; set; } = 0f;
+		private float Frame = 0f;
 
-        //Take step in physics renderer
-        public void PhyStep()
-        {
-            Time += Frame;
-            float GetStep = GetStepDt();
-            for (int i = 0; i < SubSteps; i++)
-            {
-                AddGrav();
-                //AddConstraint();
-                CalcCollisions(GetStep);
-                UpdateObjects(GetStep);
-            }
-        }
+		//Take step in physics renderer
+		public void PhyStep() {
+			Time += Frame;
+			float GetStep = GetStepDt();
+			for (int i = 0; i < SubSteps; i++) {
+				AddGrav();
+				//AddConstraint();
+				CalcCollisions(GetStep);
+				UpdateObjects(GetStep);
+			}
+		}
 
-        private void AddConstraint()
-        {
-            //Get Constraint size and position
-            Vector2 Constraint = new Vector2(240f, 240f);
-            float radius = 240f;
-            foreach (EntityPhysical obj in entObj)
-            {
-                Vector2 DistObj = obj.Position - Constraint;
-                float CurrDist = DistObj.Length();
+		private void AddConstraint() {
+			//Get Constraint size and position
+			Vector2 Constraint = new Vector2(240f, 240f);
+			float radius = 240f;
+			foreach (EntityPhysical obj in entObj) {
+				Vector2 DistObj = obj.Position - Constraint;
+				float CurrDist = DistObj.Length();
 
-                if (CurrDist > (radius - obj.radius))
-                {
-                    Vector2 disp = DistObj / CurrDist;
-                    obj.Position = obj.Position + disp * (CurrDist * obj.radius);
-                }
-            }
-        }
+				if (CurrDist > (radius - obj.Radius)) {
+					Vector2 disp = DistObj / CurrDist;
+					obj.Position = obj.Position + disp * (CurrDist * obj.Radius);
+				}
+			}
+		}
 
-        private void CalcCollisions(float dt)
-        {
-            //List<Collisions> collisions = new List<Collisions>();
+		private void CalcCollisions(float dt) {
+			//List<Collisions> collisions = new List<Collisions>();
 
-            float response = 1f;
-            int count = GetObjectCount(entObj);
-            /*
+			float response = 1f;
+			int count = GetObjectCount(entObj);
+			/*
             foreach (EntityPhysical obj in entObj)
             {
                 foreach (EntityPhysical obj2 in entObj)
@@ -121,227 +109,189 @@ namespace RoguePyra.Physics
                 }
             }
             */
-            for (int i = 0; i < count; i++)
-            {
-                EntityPhysical obj = entObj[i];
-                for (int k = i+1; k < count; k++)
-                {
-                    EntityPhysical obj2 = entObj[k];
-                    if (obj == obj2) continue;
+			for (int i = 0; i < count; i++) {
+				EntityPhysical obj = entObj[i];
+				for (int k = i + 1; k < count; k++) {
+					EntityPhysical obj2 = entObj[k];
+					if (obj == obj2) continue;
 
-                    if (EntityPhysical.Shape.CIRCLE == obj.EntityShape && EntityPhysical.Shape.CIRCLE == obj2.EntityShape)
-                    {
-                        Vector2 vec = obj.Position - obj2.Position;
+					if (EntityPhysical.Shape.CIRCLE == obj.EntityShape && EntityPhysical.Shape.CIRCLE == obj2.EntityShape) {
+						Vector2 vec = obj.Position - obj2.Position;
 
-                        float dist2 = (vec.X * vec.X) + (vec.Y * vec.Y);
-                        //Console.WriteLine("Dist2 " + dist2);
-                        float minDist = obj.radius + obj2.radius;
-                        //Console.WriteLine("Mind " + minDist);
+						float dist2 = (vec.X * vec.X) + (vec.Y * vec.Y);
+						//Console.WriteLine("Dist2 " + dist2);
+						float minDist = obj.Radius + obj2.Radius;
+						//Console.WriteLine("Mind " + minDist);
 
-                        if (dist2 < (minDist * minDist))
-                        {
-                            float dist = (float)Math.Sqrt(dist2);
-                            //Console.WriteLine("Dist " + dist);
-                            Vector2 a = vec / dist;
-                            //Console.WriteLine("VecA " + a);
-                            float ratio1 = obj.radius / (obj.radius + obj2.radius);
-                            float ratio2 = obj2.radius / (obj.radius + obj2.radius);
-                            float delta = 0.1f * response * (dist - minDist);
+						if (dist2 < (minDist * minDist)) {
+							float dist = (float)Math.Sqrt(dist2);
+							//Console.WriteLine("Dist " + dist);
+							Vector2 a = vec / dist;
+							//Console.WriteLine("VecA " + a);
+							float ratio1 = obj.Radius / (obj.Radius + obj2.Radius);
+							float ratio2 = obj2.Radius / (obj.Radius + obj2.Radius);
+							float delta = 0.1f * response * (dist - minDist);
 
-                            obj.Position -= a * (ratio2 * delta);
-                            obj2.Position += a * (ratio1 * delta);
-                        }
-                    }
-                    else if (EntityPhysical.Shape.RECTANGLE == obj.EntityShape && EntityPhysical.Shape.RECTANGLE == obj2.EntityShape)
-                    {
-                        //If statement to check if rectangles overlap at any point, if any of these conditions fail, there's overlap
-                        if ((obj.Position.X + obj.width) > obj2.Position.X   && //If obj1's right edge is past obj2's
-                             obj.Position.X < (obj2.Position.X + obj2.width) && //If obj1's left edge is past obj2's
-                            (obj.Position.Y + obj.height) > obj2.Position.Y  && //If obj1's height is above obj2's
-                             obj.Position.Y < (obj2.Position.Y + obj2.height))  //If obj1's height is below obj2's
-                        {
-                            //Console.WriteLine("Collision Detected!");
-                            //If both objects are immovable (like a room), continue loop
-                            if (obj._IsMov == false && obj2._IsMov == false) continue;
+							obj.Position -= a * (ratio2 * delta);
+							obj2.Position += a * (ratio1 * delta);
+						}
+					} else if (EntityPhysical.Shape.RECTANGLE == obj.EntityShape && EntityPhysical.Shape.RECTANGLE == obj2.EntityShape) {
+						//If statement to check if rectangles overlap at any point, if any of these conditions fail, there's overlap
+						if ((obj.Position.X + obj.Width) > obj2.Position.X && //If obj1's right edge is past obj2's
+							 obj.Position.X < (obj2.Position.X + obj2.Width) && //If obj1's left edge is past obj2's
+							(obj.Position.Y + obj.Height) > obj2.Position.Y && //If obj1's height is above obj2's
+							 obj.Position.Y < (obj2.Position.Y + obj2.Height))  //If obj1's height is below obj2's
+						{
+							//Console.WriteLine("Collision Detected!");
+							//If both objects are immovable (like a room), continue loop
+							if (obj.IsMov == false && obj2.IsMov == false) continue;
 
-                            //Calculate the overlap, resolve on least overlap
-                            if (CalculateOverlapX(obj, obj2) < CalculateOverlapY(obj, obj2)) //Push along x
-                            {
-                                if (obj._IsMov) //Second rectangle is rigid
-                                {
-                                    obj.Position -= new Vector2(obj.Position.X + CalculateOverlapX(obj, obj2), 0f);
-                                }
-                                else if (obj2._IsMov) //First rectangle is rigid
-                                {
-                                    obj2.Position -= new Vector2(obj2.Position.X - CalculateOverlapX(obj, obj2), 0f);
-                                }
-                                else //No rectangle is rigid
-                                {
-                                    obj.Position -= new Vector2(obj.Position.X - CalculateOverlapX(obj, obj2)/2f, obj.Position.Y);
-                                    obj2.Position += new Vector2(obj2.Position.X + CalculateOverlapX(obj, obj2)/2f, obj2.Position.Y);
-                                }
-                            }
-                            else //Push along y
-                            {
-                                if (obj._IsMov) //Second rectangle is rigid
-                                {
-                                    obj.Position -= new Vector2(0f, CalculateOverlapY(obj, obj2));
-                                    //Console.WriteLine("Obj: " + obj.Position);
-                                }
-                                else if (obj2._IsMov) //First rectangle is rigid
-                                {
-                                    //Console.WriteLine("Obj2: " + obj2.Position);
-                                    //Console.WriteLine("Obj1: " + obj.Position);
-                                    obj2.Position -= new Vector2(0f, CalculateOverlapY(obj2, obj));
-                                    //Console.WriteLine("Obj1: " + obj.Position);
-                                    //Console.WriteLine("Obj2: " + obj2.Position);
+							//Calculate the overlap, resolve on least overlap
+							if (CalculateOverlapX(obj, obj2) < CalculateOverlapY(obj, obj2)) //Push along x
+							{
+								if (obj.IsMov) //Second rectangle is rigid
+								{
+									obj.Position -= new Vector2(obj.Position.X + CalculateOverlapX(obj, obj2), 0f);
+								} else if (obj2.IsMov) //First rectangle is rigid
+								  {
+									obj2.Position -= new Vector2(obj2.Position.X - CalculateOverlapX(obj, obj2), 0f);
+								} else //No rectangle is rigid
+								  {
+									obj.Position -= new Vector2(obj.Position.X - CalculateOverlapX(obj, obj2) / 2f, obj.Position.Y);
+									obj2.Position += new Vector2(obj2.Position.X + CalculateOverlapX(obj, obj2) / 2f, obj2.Position.Y);
+								}
+							} else //Push along y
+							  {
+								if (obj.IsMov) //Second rectangle is rigid
+								{
+									obj.Position -= new Vector2(0f, CalculateOverlapY(obj, obj2));
+									//Console.WriteLine("Obj: " + obj.Position);
+								} else if (obj2.IsMov) //First rectangle is rigid
+								  {
+									//Console.WriteLine("Obj2: " + obj2.Position);
+									//Console.WriteLine("Obj1: " + obj.Position);
+									obj2.Position -= new Vector2(0f, CalculateOverlapY(obj2, obj));
+									//Console.WriteLine("Obj1: " + obj.Position);
+									//Console.WriteLine("Obj2: " + obj2.Position);
 
-                                }
-                                else //No rectangle is rigid
-                                {
-                                    obj.Position -= new Vector2(0f, obj.Position.Y - CalculateOverlapY(obj, obj2)/2f);
-                                    obj2.Position += new Vector2(0f, obj2.Position.Y + CalculateOverlapY(obj, obj2)/2f);
-                                    Console.WriteLine("Objboth: " + obj2.Position);
-                                }
-                            }
-                        }
-                    }
-                    else //Object shapes are a combination
-                    {
-                        if (obj._IsMov == false && obj2._IsMov == false) continue; //If both objects are rigid, skip
+								} else //No rectangle is rigid
+								  {
+									obj.Position -= new Vector2(0f, obj.Position.Y - CalculateOverlapY(obj, obj2) / 2f);
+									obj2.Position += new Vector2(0f, obj2.Position.Y + CalculateOverlapY(obj, obj2) / 2f);
+									Console.WriteLine("Objboth: " + obj2.Position);
+								}
+							}
+						}
+					} else //Object shapes are a combination
+					  {
+						if (obj.IsMov == false && obj2.IsMov == false) continue; //If both objects are rigid, skip
 
-                        if (obj.EntityShape == EntityPhysical.Shape.CIRCLE && obj2.EntityShape == EntityPhysical.Shape.RECTANGLE)
-                        {
-                            
-                            float distX = obj.Position.X;
-                            float distY = obj.Position.Y;
+						if (obj.EntityShape == EntityPhysical.Shape.CIRCLE && obj2.EntityShape == EntityPhysical.Shape.RECTANGLE) {
 
-                            //Check for overlap
-                            if (obj.Position.X < obj2.Position.X)
-                            {
-                                distX -= obj2.Position.X;
-                            }
-                            else if (obj.Position.X > (obj2.Position.X + obj2.width))
-                            {
-                                distX -= (obj2.Position.X + obj2.width);
-                            }
-                            else
-                            {
-                                distX -= obj.Position.X;
-                            }
+							float distX = obj.Position.X;
+							float distY = obj.Position.Y;
 
-                            if (obj.Position.Y < obj2.Position.Y)
-                            {
-                                distY -= obj2.Position.Y;
-                            }
-                            else if (obj.Position.Y > (obj2.Position.Y + obj2.height))
-                            {
-                                distY -= (obj2.Position.Y + obj2.height);
-                            }
-                            else
-                            {
-                                distY -= obj.Position.Y;
-                            }
+							//Check for overlap
+							if (obj.Position.X < obj2.Position.X) {
+								distX -= obj2.Position.X;
+							} else if (obj.Position.X > (obj2.Position.X + obj2.Width)) {
+								distX -= (obj2.Position.X + obj2.Width);
+							} else {
+								distX -= obj.Position.X;
+							}
 
-                            //Calculate distance and compare it to the circle's radius
-                            //Console.WriteLine("obj1 " + obj.Position);
-                            //Console.WriteLine("obj2 " + obj2.Position);
-                            float dist = (float)Math.Sqrt(distX * distX + distY * distY);
-                            //Console.WriteLine("Dist: " + dist);
-                            if (dist <= obj.radius*2f) //Check collision
-                            {
-                                //Resolve
-                                float x = 2f*obj.radius-(float)Math.Sqrt(distX * distX);
-                                if (x == (2f * obj.radius)) x = 0;
-                                float y = 2f*obj.radius-(float)Math.Sqrt(distY * distY);
-                                Vector2 vec = new Vector2(x, y);
-                                
-                                Console.WriteLine("X: " + x);
-                                Console.WriteLine("Y: " + y);
-                                obj.Position -= vec;
-                            }
-                        }
-                    }
-                }
-            }
-        }
+							if (obj.Position.Y < obj2.Position.Y) {
+								distY -= obj2.Position.Y;
+							} else if (obj.Position.Y > (obj2.Position.Y + obj2.Height)) {
+								distY -= (obj2.Position.Y + obj2.Height);
+							} else {
+								distY -= obj.Position.Y;
+							}
 
-        private float CalculateOverlapX(EntityPhysical obj1, EntityPhysical obj2)
-        {
-           // Console.WriteLine("X overlap: ");
-            //Console.WriteLine((obj1.Position.X + obj1.width) - obj2.Position.X);
-            return ((obj1.Position.X + obj1.width) - obj2.Position.X);
-        }
+							//Calculate distance and compare it to the circle's radius
+							//Console.WriteLine("obj1 " + obj.Position);
+							//Console.WriteLine("obj2 " + obj2.Position);
+							float dist = (float)Math.Sqrt(distX * distX + distY * distY);
+							//Console.WriteLine("Dist: " + dist);
+							if (dist <= obj.Radius * 2f) //Check collision
+							{
+								//Resolve
+								float x = 2f * obj.Radius - (float)Math.Sqrt(distX * distX);
+								if (x == (2f * obj.Radius)) x = 0;
+								float y = 2f * obj.Radius - (float)Math.Sqrt(distY * distY);
+								Vector2 vec = new Vector2(x, y);
 
-        private float CalculateOverlapY(EntityPhysical obj1, EntityPhysical obj2)
-        {
-            //Console.WriteLine("Y Overlap: ");
-           // Console.WriteLine((obj1.Position.Y + obj1.height) - obj2.Position.Y);
-            return ((obj1.Position.Y + obj1.height) - obj2.Position.Y);
-        }
+								Console.WriteLine("X: " + x);
+								Console.WriteLine("Y: " + y);
+								obj.Position -= vec;
+							}
+						}
+					}
+				}
+			}
+		}
 
-        private void AddGrav()
-        {
-            foreach (var ent in entObj)
-            {
-                if (!ent._IsGrav) continue;
+		private float CalculateOverlapX(EntityPhysical obj1, EntityPhysical obj2) {
+			// Console.WriteLine("X overlap: ");
+			//Console.WriteLine((obj1.Position.X + obj1.width) - obj2.Position.X);
+			return ((obj1.Position.X + obj1.Width) - obj2.Position.X);
+		}
 
-                ent.Accelerate(_grav);
-            }
-        }
+		private float CalculateOverlapY(EntityPhysical obj1, EntityPhysical obj2) {
+			//Console.WriteLine("Y Overlap: ");
+			// Console.WriteLine((obj1.Position.Y + obj1.height) - obj2.Position.Y);
+			return ((obj1.Position.Y + obj1.Height) - obj2.Position.Y);
+		}
 
-        private void UpdateObjects(float dt)
-        {
-            foreach (var ent in entObj)
-            {
-                ent.Update(dt);
-            }
-        }
+		private void AddGrav() {
+			foreach (var ent in entObj) {
+				if (!ent.IsGrav) continue;
 
-        public void AddEntity(EntityPhysical obj)
-        {
-            entObj.Add(obj);
-        }
-        
-        public void RemoveEntity(EntityPhysical obj)
-        {
-            entObj.Remove(obj);
-        }
+				ent.Accelerate(_grav);
+			}
+		}
 
-        public List<EntityPhysical> GetEntities()
-        {
-            return entObj;
-        }
+		private void UpdateObjects(float dt) {
+			foreach (var ent in entObj) {
+				ent.Update(dt);
+			}
+		}
 
-        public void SetSimRate(float simRate)
-        {
-            Frame = 1f / simRate;
-        }
+		public void AddEntity(EntityPhysical obj) {
+			entObj.Add(obj);
+		}
 
-        public void SetSubSteps(int subSteps)
-        {
-            if (subSteps < 1)
-            {
-                subSteps = 1;
-                return;
-            }
+		public void RemoveEntity(EntityPhysical obj) {
+			entObj.Remove(obj);
+		}
 
-            SubSteps = subSteps;
-        }
+		public List<EntityPhysical> GetEntities() {
+			return entObj;
+		}
 
-        public void SetObjVelocity(EntityPhysical entObj, Vector2 a)
-        {
-            entObj.SetVelocity(a, GetStepDt());
-        }
+		public void SetSimRate(float simRate) {
+			Frame = 1f / simRate;
+		}
 
-        public int GetObjectCount(List<EntityPhysical> entObj)
-        {
-            return entObj.Count;
-        }
+		public void SetSubSteps(int subSteps) {
+			if (subSteps < 1) {
+				subSteps = 1;
+				return;
+			}
 
-        public float GetStepDt()
-        {
-            return Frame / (float)SubSteps;
-        }
-    }   
+			SubSteps = subSteps;
+		}
+
+		public void SetObjVelocity(EntityPhysical entObj, Vector2 a) {
+			entObj.SetVelocity(a, GetStepDt());
+		}
+
+		public int GetObjectCount(List<EntityPhysical> entObj) {
+			return entObj.Count;
+		}
+
+		public float GetStepDt() {
+			return Frame / (float)SubSteps;
+		}
+	}
 }

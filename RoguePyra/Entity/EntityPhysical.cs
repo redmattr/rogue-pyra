@@ -1,121 +1,98 @@
-﻿using RoguePyra.Physics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 
-namespace RoguePyra.Entity
-{
-    public class EntityPhysical : CollisionObj
-    {
-        public Vector2 PositionPast = Vector2.Zero;
-        public Vector2 Position { get; set; } //Getter | Setter for entity position
-        public Vector2 Acceleration { get; set; } //Vector Acceleration for approximate movement
-        public Vector2 Force { get; set; } //For physics calculations
-        public float mass { get; set; } //Mass of entity
-        public float radius { get; set; } //If object is circle
-        public float height { get; set; } //If object is square/rectangle
-        public float width { get; set; } //If object is square/rectangle
-        public bool _IsGrav { get; set; } //Is entity affected by grav?
-        public bool _IsMov {  get; set; } //Is entity rigid? E.g. can it be moved (think wall or floor)
-        public enum Shape { RECTANGLE, CIRCLE };
-        public Shape EntityShape { get; set; } 
+using RoguePyra.Physics;
 
-        //Friction Coefficients
-        public float DynamicFriction { get; set; }
-        public float StaticFriction { get; set; }
+namespace RoguePyra.Entity {
+	internal class EntityPhysical : CollisionObj {
+		public Vector2 PositionPast = Vector2.Zero;
+		public Vector2 Position { get; set; } // Getter | Setter for entity position
+		public Vector2 Acceleration { get; set; } // Vector Acceleration for approximate movement
+		public Vector2 Force { get; set; } // For physics calculations
+		public float Mass { get; set; } // Mass of entity
+		public float Radius { get; set; } // If object is circle
+		public float Height { get; set; } // If object is square/rectangle
+		public float Width { get; set; } // If object is square/rectangle
+		public bool IsGrav { get; set; } // Is entity affected by grav?
+		public bool IsMov { get; set; } // Is entity rigid? E.g. can it be moved (think wall or floor)
+		public enum Shape { RECTANGLE, CIRCLE };
+		public Shape EntityShape { get; set; }
 
-        public float Elasticity { get; set; } //Bounciness (when colliding)
+		//Friction Coefficients
+		public float DynamicFriction { get; set; }
+		public float StaticFriction { get; set; }
 
-        public EntityPhysical()
-        {
-            Position = Vector2.Zero;
-            Acceleration = Vector2.Zero;
-            Force = Vector2.Zero;
-            mass = 0f;
-            _IsGrav = false;
-            DynamicFriction = 0f;
-            StaticFriction = 0f;
-            Elasticity = 0f;
-            PositionPast = Position;
-        }
+		public float Elasticity { get; set; } //Bounciness (when colliding)
 
-        public EntityPhysical(Vector2 pos, Vector2 acc, float mass, bool hasGrav, float dynamicFriction, float staticFriction, float elasticity)
-        {
-            Position = pos;
-            Acceleration = acc;
-            this.mass = mass;
-            _IsGrav = hasGrav;
-            DynamicFriction = dynamicFriction;
-            StaticFriction = staticFriction;
-            Elasticity = elasticity;
-            PositionPast = Position;
-        }
+		public EntityPhysical() {
+			Position = Vector2.Zero;
+			Acceleration = Vector2.Zero;
+			Force = Vector2.Zero;
+			Mass = 0f;
+			IsGrav = false;
+			DynamicFriction = 0f;
+			StaticFriction = 0f;
+			Elasticity = 0f;
+			PositionPast = Position;
+		}
 
-        //Rectangle
-        public EntityPhysical(Vector2 pos, float mass, float width, float height, bool hasGrav, bool isMov)
-        {
-            Position = pos;
-            this.mass = mass;
-            this.width = width;
-            this.height = height;
-            _IsGrav = hasGrav;
-            _IsMov = isMov;
-            DynamicFriction = 1f;
-            StaticFriction = 1f;
-            Elasticity = 0f;
-            PositionPast = Position;
-            EntityShape = Shape.RECTANGLE;
-        }
+		public EntityPhysical(Vector2 pos, Vector2 acc, float mass, bool hasGrav, float dynamicFriction, float staticFriction, float elasticity) {
+			Position = pos;
+			Acceleration = acc;
+			this.Mass = mass;
+			IsGrav = hasGrav;
+			DynamicFriction = dynamicFriction;
+			StaticFriction = staticFriction;
+			Elasticity = elasticity;
+			PositionPast = Position;
+		}
 
-        //Circle
-        public EntityPhysical(Vector2 pos, float mass, float rad, bool hasGrav, bool isMov)
-        {
-            Position = pos;
-            this.mass = mass;
-            _IsGrav = hasGrav;
-            _IsMov = isMov;
-            radius = rad;
-            DynamicFriction = 1f;
-            StaticFriction = 1f;
-            Elasticity = 0f;
-            PositionPast = Position;
-            EntityShape = Shape.CIRCLE;
-        }
+		//Rectangle
+		public EntityPhysical(Vector2 pos, float mass, float width, float height, bool hasGrav, bool isMov) {
+			Position = pos;
+			this.Mass = mass;
+			this.Width = width;
+			this.Height = height;
+			IsGrav = hasGrav;
+			IsMov = isMov;
+			DynamicFriction = 1f;
+			StaticFriction = 1f;
+			Elasticity = 0f;
+			PositionPast = Position;
+			EntityShape = Shape.RECTANGLE;
+		}
 
-        public void Accelerate(Vector2 acc)
-        {
-            Acceleration += acc;
-        }
+		//Circle
+		public EntityPhysical(Vector2 pos, float mass, float rad, bool hasGrav, bool isMov) {
+			Position = pos;
+			this.Mass = mass;
+			IsGrav = hasGrav;
+			IsMov = isMov;
+			Radius = rad;
+			DynamicFriction = 1f;
+			StaticFriction = 1f;
+			Elasticity = 0f;
+			PositionPast = Position;
+			EntityShape = Shape.CIRCLE;
+		}
 
-        public void SetVelocity(Vector2 a, float dt)
-        {
-            PositionPast = Position - (a * dt);
-        }
+		public void Accelerate(Vector2 acc) => Acceleration += acc;
 
-        public void AddVelocity(Vector2 a, float dt)
-        {
-            PositionPast -= (a * dt);
-        }
+		public void SetVelocity(Vector2 a, float dt) => PositionPast = Position - (a * dt);
 
-        public Vector2 GetVelocity(float dt)
-        {
-            return (Position - PositionPast) / dt;
-        }
+		public void AddVelocity(Vector2 a, float dt) => PositionPast -= (a * dt);
 
-        public void Update(float dt)
-        {
-            //See how much the object has moved
-            Vector2 disp = Position - PositionPast;
-            PositionPast = Position;
+		public Vector2 GetVelocity(float dt) => (Position - PositionPast) / dt;
 
-            //Verlet integration
-            Position = Position + disp + Acceleration * (dt * dt);
+		public void Update(float dt) {
+			//See how much the object has moved
+			Vector2 disp = Position - PositionPast;
+			PositionPast = Position;
 
-            //Reset acceleration
-            Acceleration = Vector2.Zero;
-        }
-    }
+			//Verlet integration
+			Position = Position + disp + Acceleration * (dt * dt);
+
+			//Reset acceleration
+			Acceleration = Vector2.Zero;
+		}
+	}
 }
