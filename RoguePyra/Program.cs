@@ -90,24 +90,24 @@ namespace RoguePyra {
 
 		// --- Mode runners ------------------------------------------------------
 
-		private static async Task RunServerAsync(IPAddress ip, int tcpPort, CancellationToken ct) {
-			TcpMainServer server = new(ip, tcpPort);
-			Console.WriteLine($"[ENTRY] Starting TCP server on {ip}:{tcpPort}  (Ctrl+C to stop)");
+		private static async Task RunServerAsync(IPAddress ip, int port, CancellationToken ct) {
+			TcpMainServer server = new(ip, port);
+			Console.WriteLine($"[ENTRY] Starting TCP server on {ip}:{port}  (Ctrl+C to stop)");
 			await server.RunAsync(ct);
 			Console.WriteLine("[ENTRY] TCP server stopped.");
 		}
 
-		private static async Task RunUdpHostAsync(int udpPort, CancellationToken ct) {
-			UdpGameHost host = new(udpPort);
-			Console.WriteLine($"[ENTRY] Starting UDP host on 0.0.0.0:{udpPort}  (Ctrl+C to stop)");
+		private static async Task RunUdpHostAsync(int port, CancellationToken ct) {
+			UdpGameHost host = new(port);
+			Console.WriteLine($"[ENTRY] Starting UDP host on 0.0.0.0:{port}  (Ctrl+C to stop)");
 			await host.RunAsync(ct);
 			Console.WriteLine("[ENTRY] UDP host stopped.");
 		}
 
 		// This might be redundant now??? I might try removing this at some point, hopefully nothing explodes - Ian.
-		private static async Task RunClientCLIAsync(string name, IPAddress hostIp, int tcpPort, CancellationToken ct) {
-			TcpClientApp client = new(name, hostIp.ToString(), tcpPort);
-			Console.WriteLine($"[ENTRY] Starting TCP console client to {hostIp}:{tcpPort} as '{name}'  (type /quit to exit)");
+		private static async Task RunClientCLIAsync(string name, IPAddress hostIp, int port, CancellationToken ct) {
+			TcpClientApp client = new(name, hostIp.ToString(), port);
+			Console.WriteLine($"[ENTRY] Starting TCP console client to {hostIp}:{port} as '{name}'  (type /quit to exit)");
 			await client.RunAsync(ct);
 			Console.WriteLine("[ENTRY] TCP console client stopped.");
 		}
