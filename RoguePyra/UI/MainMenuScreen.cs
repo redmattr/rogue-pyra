@@ -13,14 +13,14 @@ internal sealed class MainMenuScreen : UserControl {
 	private readonly Button _btnPlay;   // Play button - opens HostListForm.
 	private readonly Button _btnExit;   // Exit button - quits game.
 	private readonly Label _title;      // Game title text.
-
-	public MainMenuScreen() {
+	
+	public MainMenuScreen(Form mainForm) {
 		// Game Title
 		_title = new Label {
 			Text = "RoguePyra",
 			Font = new Font("Segoe UI", 24, FontStyle.Bold),
 			AutoSize = true,
-			Location = new Point((ClientSize.Width - 220) / 2, 40)
+			Location = new Point((mainForm.Width - Width) / 2, 40)
 		};
 		Controls.Add(_title);
 
@@ -29,7 +29,7 @@ internal sealed class MainMenuScreen : UserControl {
 			Text = "Play",
 			Font = new Font("Segoe UI", 12),
 			Size = new Size(180, 44),
-			Location = new Point((ClientSize.Width - 180) / 2, 120)
+			Location = new Point((mainForm.Width - Width) / 2, 120)
 		};
 		_btnPlay.Click += (_, __) => OpenHostList?.Invoke(this, EventArgs.Empty);
 		Controls.Add(_btnPlay);
@@ -39,7 +39,7 @@ internal sealed class MainMenuScreen : UserControl {
 			Text = "Exit",
 			Font = new Font("Segoe UI", 12),
 			Size = new Size(180, 44),
-			Location = new Point((ClientSize.Width - 180) / 2, 180)
+			Location = new Point((mainForm.Width - Width) / 2, 180)
 		};
 		_btnExit.Click += (_, __) => ExitRequested?.Invoke(this, EventArgs.Empty);
 		Controls.Add(_btnExit);

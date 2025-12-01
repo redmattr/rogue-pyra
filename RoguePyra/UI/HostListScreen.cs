@@ -73,16 +73,16 @@ internal class HostListScreen : UserControl {
 		Controls.Add(_lvLobbies);
 
 		// --- Bottom buttons ---
-		_btnJoin = new Button { Text = "Join Selected", Location = new Point(12, 402), Size = new Size(140, 40), Enabled = false };
-		_btnJoin.Click += OnJoinClick;
-
-		_btnCreate = new Button { Text = "Create Lobby", Location = new Point(160, 402), Size = new Size(140, 40), Enabled = false };
-		_btnCreate.Click += OnCreateClick;
-
-		_btnMainMenu = new Button { Text = "Main Menu", Location = new Point(360, 402), Size = new Size(140, 40), Enabled = true };
+		_btnMainMenu = new Button { Text = "Main Menu", Location = new Point(12, 402), Size = new Size(140, 40), Enabled = true };
 		_btnMainMenu.Click += (_, __) => ReturnToMainMenu?.Invoke(this, EventArgs.Empty);
 
-		_status = new Label { Text = "Not connected.", AutoSize = true, Location = new Point(320, 413) };
+		_btnJoin = new Button { Text = "Join Selected", Location = new Point(160, 402), Size = new Size(140, 40), Enabled = false };
+		_btnJoin.Click += OnJoinClick;
+
+		_btnCreate = new Button { Text = "Create Lobby", Location = new Point(308, 402), Size = new Size(140, 40), Enabled = false };
+		_btnCreate.Click += OnCreateClick;
+
+		_status = new Label { Text = "Not connected.", AutoSize = true, Location = new Point(468, 413) };
 
 		Controls.AddRange(new Control[] { _btnJoin, _btnCreate, _btnMainMenu, _status });
 
@@ -225,11 +225,11 @@ internal class HostListScreen : UserControl {
 						_net,
 						isHost: isHost,
 						lobbyId: _pendingJoinLobbyId,
-						localPlayerId: _playerName);
+						localPlayerId: _playerName
+						);
 
 					_netOwned = false;
 					gf.Show();
-
 
 					// reset
 					_pendingJoinLobbyId = -1;
