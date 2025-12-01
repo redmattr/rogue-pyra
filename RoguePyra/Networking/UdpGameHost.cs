@@ -28,9 +28,9 @@ internal sealed class UdpGameHost {
 
 	// ---- Player state tracked by the host (keyed by client endpoint) ----
 	private sealed class Player {
-		public string Id = Guid.NewGuid().ToString("N").Substring(0, 6);
-		public float X, Y;
-		public int Hp = 100;
+		public readonly string ID = Guid.NewGuid().ToString("N").Substring(0, 6);
+		public float posX, posY;
+		public int health = 100;
 
 		public Protocol.KeysMask Keys = Protocol.KeysMask.None; // last input
 		public long LastSeenHostMs;                             // host time (ms)
@@ -41,18 +41,18 @@ internal sealed class UdpGameHost {
 
 	// ---- World constants ----
 	private int _snapSeq = 0;
-	private const float WORLD_W = 840f, WORLD_H = 480f;
-	private const float BOX = 24f;
+	private const float WORLD_W = 840.0f, WORLD_H = 480.0f; // Width and height of world.
+	private const float BOX = 24.0f;
 
 	// Lava rises forever; game never ends
+	private const float LavaRiseRate = 18.0f;   // px/sec rising speed
+	private const int LavaDPS = 60;    // damage per second when submerged
 	private float _lavaY = WORLD_H; // Y of lava surface (0 = top)
-	private const float LavaRate = 18f;   // px/sec rising speed
-	private const int LavaDps = 60;    // damage per second when submerged
 
-	public UdpGameHost(int udpPort = Protocol.DefaultUdpPort) {
-		_listenEp = new IPEndPoint(IPAddress.Any, udpPort);
+	public UdpGameHost(int port = Protocol.DefaultUdpPort) {
+		_listenEp = new IPEndPoint(IPAddress.Any, port);
 		_udp = new UdpClient(_listenEp);
-		Console.WriteLine($"[HostUDP] Listening on 0.0.0.0:{udpPort}");
+		Console.WriteLine($"[HostUDP] Listening on 0.0.0.0:{port}");
 	}
 
 	/// Starts the host: one loop to receive INPUTs, one loop to simulate & broadcast.
@@ -80,11 +80,11 @@ internal sealed class UdpGameHost {
 			if (!_players.TryGetValue(res.RemoteEndPoint, out var pl)) {
 				// Spawn with a soft-random start position
 				pl = new Player {
-					X = 60 + Random.Shared.Next(0, 600),
-					Y = 60 + Random.Shared.Next(0, 300)
+					posX = 60 + Random.Shared.Next(0, 600),
+					posY = 60 + Random.Shared.Next(0, 300)
 				};
 				_players[res.RemoteEndPoint] = pl;
-				Console.WriteLine($"[HostUDP] +Player {pl.Id} @ {res.RemoteEndPoint}");
+				Console.WriteLine($"[HostUDP] +Player {pl.ID} @ {res.RemoteEndPoint}");
 			}
 
 			pl.Keys = keys;
@@ -130,29 +130,29 @@ internal sealed class UdpGameHost {
 					var len = MathF.Sqrt(dx * dx + dy * dy);
 					dx /= len; dy /= len;
 
-					pl.X = Protocol.Clamp(pl.X + dx * speed * dt, 0, maxX);
-					pl.Y = Protocol.Clamp(pl.Y + dy * speed * dt, 0, maxY);
+					pl.posX = Protocol.Clamp(pl.posX + dx * speed * dt, 0, maxX);
+					pl.posY = Protocol.Clamp(pl.posY + dy * speed * dt, 0, maxY);
 				}
 			}
 			foreach (var ep in toRemove) {
-				Console.WriteLine($"[HostUDP] -Player {_players[ep].Id}");
+				Console.WriteLine($"[HostUDP] -Player {_players[ep].ID}");
 				_players.Remove(ep);
 			}
 
 			// ---- Lava rises forever; apply damage to submerged players ----
-			_lavaY = Math.Max(0f, _lavaY - LavaRate * dt);
+			_lavaY = Math.Max(0f, _lavaY - LavaRiseRate * dt);
 
 			foreach (var pl in _players.Values) {
-				bool inLava = (pl.Y + BOX) > _lavaY;
+				bool inLava = (pl.posY + BOX) > _lavaY;
 				if (inLava)
-					pl.Hp = Math.Max(0, pl.Hp - (int)(LavaDps * dt));
+					pl.health = Math.Max(0, pl.health - (int)(LavaDPS * dt));
 			}
 
 			// ---- Broadcast snapshot (~12 Hz) ----
 			if (now % 80 < 16) {
 				var arr = new (string id, float x, float y, int hp)[_players.Count];
 				int i = 0;
-				foreach (var p in _players.Values) arr[i++] = (p.Id, p.X, p.Y, p.Hp);
+				foreach (var p in _players.Values) arr[i++] = (p.ID, p.posX, p.posY, p.health);
 
 				var snap = Protocol.BuildSnapshot(++_snapSeq, _lavaY, arr);
 				var bytes = Encoding.UTF8.GetBytes(snap);

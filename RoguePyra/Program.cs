@@ -8,10 +8,9 @@
 //   --clientviz   → WinForms client (launches MainMenuForm → HostList → GameForm).
 //
 // Common flags:
-//   --bind <ip>       (server bind IP, default 0.0.0.0)
-//   --tcpport <p>     (TCP port, default Protocol.DefaultTcpPort)
-//   --udpport <p>     (UDP port, default Protocol.DefaultUdpPort)
-//   --name <n>        (player name for clientcli)
+//   --ip <ip>         When running server: server bind IP, default 0.0.0.0; When running
+//   --port <p>        When running server: TCP port, default Protocol.DefaultTcpPort; When running host: UDP port, default Protocol.DefaultUdpPort.
+//   --name <n>        Player name for client.
 //   --hostip <ip>     (server IP for clientcli; menu reads this from UI)
 
 using System;
@@ -49,13 +48,6 @@ namespace RoguePyra {
 			}
 			if (programMode == ProgramMode.notSet) { PrintHelp("Error: no program mode specified."); return; }
 
-			// Determine other options with default values.
-			IPAddress bindIP = IPAddress.Parse(GetArg(args, "--bind") ?? "0.0.0.0");
-			IPAddress hostIP = IPAddress.Parse(GetArg(args, "--hostip") ?? "127.0.0.1");
-			int tcpPort = ParseInt(GetArg(args, "--tcpport"), Protocol.DefaultTcpPort);
-			int udpPort = ParseInt(GetArg(args, "--udpport"), Protocol.DefaultUdpPort);
-			string playerName = GetArg(args, "--name") ?? $"Player{Random.Shared.Next(1000, 9999)}";
-
 			// Console modes share a CancellationToken that cancels on Ctrl+C.
 			using CancellationTokenSource cts = new();
 			Console.CancelKeyPress += (_, e) => {
@@ -63,16 +55,23 @@ namespace RoguePyra {
 				try { cts.Cancel(); } catch { }
 			};
 
+			// TEMP: Determine server port. (TODO: Move to switch below.)
+			int serverPort = ParseInt(GetArg(args, "--port"), Protocol.DefaultTcpPort);
+
 			// Run the apropriate mode.
 			switch (programMode) {
 				case ProgramMode.server:
-					await RunServerAsync(bindIP, tcpPort, cts.Token);
+					IPAddress serverIP = IPAddress.Parse(GetArg(args, "--ip") ?? "0.0.0.0");
+					await RunServerAsync(serverIP, serverPort, cts.Token);
 					return;
 				case ProgramMode.host:
-					await RunUdpHostAsync(udpPort, cts.Token);
+					int hostPort = ParseInt(GetArg(args, "--port"), Protocol.DefaultUdpPort);
+					await RunUdpHostAsync(hostPort, cts.Token);
 					return;
 				case ProgramMode.clientCLI:
-					await RunClientCLIAsync(playerName, hostIP, tcpPort, cts.Token);
+					string playerName = GetArg(args, "--name") ?? $"Player{Random.Shared.Next(1000, 9999)}";
+					IPAddress hostIP = IPAddress.Parse(GetArg(args, "--hostip") ?? "127.0.0.1");
+					await RunClientCLIAsync(playerName, hostIP, serverPort, cts.Token);
 					return;
 				case ProgramMode.clientViz:
 					RunClientVisualizer();
@@ -91,24 +90,24 @@ namespace RoguePyra {
 
 		// --- Mode runners ------------------------------------------------------
 
-		private static async Task RunServerAsync(IPAddress ip, int tcpPort, CancellationToken ct) {
-			TcpMainServer server = new(ip, tcpPort);
-			Console.WriteLine($"[ENTRY] Starting TCP server on {ip}:{tcpPort}  (Ctrl+C to stop)");
+		private static async Task RunServerAsync(IPAddress ip, int port, CancellationToken ct) {
+			TcpMainServer server = new(ip, port);
+			Console.WriteLine($"[ENTRY] Starting TCP server on {ip}:{port}  (Ctrl+C to stop)");
 			await server.RunAsync(ct);
 			Console.WriteLine("[ENTRY] TCP server stopped.");
 		}
 
-		private static async Task RunUdpHostAsync(int udpPort, CancellationToken ct) {
-			UdpGameHost host = new(udpPort);
-			Console.WriteLine($"[ENTRY] Starting UDP host on 0.0.0.0:{udpPort}  (Ctrl+C to stop)");
+		private static async Task RunUdpHostAsync(int port, CancellationToken ct) {
+			UdpGameHost host = new(port);
+			Console.WriteLine($"[ENTRY] Starting UDP host on 0.0.0.0:{port}  (Ctrl+C to stop)");
 			await host.RunAsync(ct);
 			Console.WriteLine("[ENTRY] UDP host stopped.");
 		}
 
 		// This might be redundant now??? I might try removing this at some point, hopefully nothing explodes - Ian.
-		private static async Task RunClientCLIAsync(string name, IPAddress hostIp, int tcpPort, CancellationToken ct) {
-			TcpClientApp client = new(name, hostIp.ToString(), tcpPort);
-			Console.WriteLine($"[ENTRY] Starting TCP console client to {hostIp}:{tcpPort} as '{name}'  (type /quit to exit)");
+		private static async Task RunClientCLIAsync(string name, IPAddress hostIp, int port, CancellationToken ct) {
+			TcpClientApp client = new(name, hostIp.ToString(), port);
+			Console.WriteLine($"[ENTRY] Starting TCP console client to {hostIp}:{port} as '{name}'  (type /quit to exit)");
 			await client.RunAsync(ct);
 			Console.WriteLine("[ENTRY] TCP console client stopped.");
 		}
@@ -150,16 +149,16 @@ namespace RoguePyra {
 		private static void PrintHelp(string? message = null) {
 			if (message != null) Console.WriteLine(message + '\n');
 			Console.WriteLine("RoguePyra — modes:");
-			Console.WriteLine("  --server      [--bind <ip>] [--tcpport <p>]");
-			Console.WriteLine("  --host        [--udpport <p>]");
-			Console.WriteLine("  --clientcli   --name <n> --hostip <ip> [--tcpport <p>]");
+			Console.WriteLine("  --server      [--ip <ip>] [--port <p>]");
+			Console.WriteLine("  --host        [--port <p>]");
+			Console.WriteLine("  --clientcli   --name <n> --hostip <ip> [--port <p>]");
 			Console.WriteLine("  --clientviz   (launches WinForms menu)");
 			Console.WriteLine();
 			Console.WriteLine("Examples:");
-			Console.WriteLine("  dotnet run -- --server --bind 0.0.0.0 --tcpport 5000");
-			Console.WriteLine("  dotnet run -- --host --udpport 6000");
-			Console.WriteLine("  dotnet run -- --clientcli --name Alice --hostip 127.0.0.1 --tcpport 5000");
-			Console.WriteLine("  dotnet run -- --clientviz");
+			Console.WriteLine("  dotnet run --server --ip 0.0.0.0 --port 5000");
+			Console.WriteLine("  dotnet run --host --port 6000");
+			Console.WriteLine("  dotnet run --clientcli --name Alice --hostip 127.0.0.1 --port 5000");
+			Console.WriteLine("  dotnet run --clientviz");
 		}
 	}
 }
