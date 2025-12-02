@@ -33,11 +33,6 @@ dotnet build
 dotnet run --server --ip 0.0.0.0 --port 5000
 ```
 
-## Start the UDP Game Host (game simulation)
-```powershell
-dotnet run --host --port 6000
-```
-
 ## Start a visual client window (used to join and create lobbies)
 ```powershell
 dotnet run --client
@@ -46,7 +41,7 @@ dotnet run --client
 # Then in the Host List Window:
 Then in the Host List window:
 Server IP: <LAN_IP> of the host machine (e.g. 192.168.1.105)
-TCP Port: 5000
+TCP Port: depends on the the host server, defaults to 8000
 Click Connect
 Click Refresh
 Select your lobby and click Join Selected
