@@ -323,7 +323,7 @@ namespace RoguePyra.Net {
 		private readonly HashSet<IPEndPoint> _knownClients = new();
 
 		// Authoritative entity state (single box for now)
-		private float _x = 100f, _y = 100f;
+		private float _x = 100.0f, _y = 100.0f;
 		private byte _lastKeysMask = 0;
 
 		public UdpGameHost(int port) {
