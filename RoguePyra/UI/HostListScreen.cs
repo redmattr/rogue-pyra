@@ -13,8 +13,6 @@ using System.Globalization;
 using RoguePyra.Networking;
 
 internal class HostListScreen : UserControl {
-	public event EventHandler ReturnToMainMenu; // Used to tell the containing form to switch to MainMenuScreen.
-
 	private readonly TextBox _tbServerIp;   // Textbox for inputting IP of the server to use.
 	private readonly TextBox _tbTcpPort;    // Textbox for inputting port of the server to use.
 	private readonly TextBox _tbPlayerName; // Textbox for inputting the client's player name.
@@ -45,7 +43,7 @@ internal class HostListScreen : UserControl {
 	//private Button _btnDirectConnect;
 	private string _playerName = "";
 
-	public HostListScreen() {
+	public HostListScreen(MainForm mainForm) {
 		// --- Top controls (server + player) ---
 		var lblIp = new Label { Text = "Server IP:", AutoSize = true, Location = new Point(12, 14) };
 		_tbServerIp = new TextBox { Text = "127.0.0.1", Width = 120, Location = new Point(80, 10) };
@@ -83,7 +81,7 @@ internal class HostListScreen : UserControl {
 
 		// --- Bottom buttons ---
 		_btnMainMenu = new Button { Text = "Main Menu", Location = new Point(12, 402), Size = new Size(140, 40), Enabled = true };
-		_btnMainMenu.Click += (_, __) => ReturnToMainMenu?.Invoke(this, EventArgs.Empty);
+		_btnMainMenu.Click += (_, __) => mainForm.SwitchScreen(MainForm.Screen.MainMenu);
 
 		_btnJoin = new Button { Text = "Join Selected", Location = new Point(160, 402), Size = new Size(140, 40), Enabled = false };
 		_btnJoin.Click += OnJoinClick;

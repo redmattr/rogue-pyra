@@ -16,6 +16,9 @@
     <Compile Update="UI\HostListScreen.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Update="UI\LogoScreen.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Update="UI\MainMenuScreen.cs">
       <SubType>UserControl</SubType>
     </Compile>

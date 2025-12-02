@@ -3,7 +3,12 @@ using System.Windows.Forms;
 
 namespace RoguePyra.UI {
 	public sealed class MainForm : Form {
-		private enum Screen { mainMenu, hostList }
+		public enum Screen { Logo, MainMenu, HostList }
+
+		private const string LogoFilepath = "Assets\\Images\\RoguePyraLogo.png"; // Where to look for the logo file. (This may not work in debug mode, but CLI should be fine.)
+		private const int LogoDisplayDuration = 2345; // Time to display logo in ms.
+
+		private readonly LogoScreen _logoScreen;			// Displays logo on startup.
 		private readonly MainMenuScreen _mainMenuScreen;	// Main menu screen.
 		private readonly HostListScreen _hostListScreen;	// Lobby selection screen.
 
@@ -16,6 +21,14 @@ namespace RoguePyra.UI {
 			BackColor = Color.White;
 			KeyPreview = true;
 
+			// Logo
+			_logoScreen = new LogoScreen(this, LogoFilepath, LogoDisplayDuration) {
+				BackColor = Color.FromArgb(25,25,25),
+				Width = ClientSize.Width,
+				Height = ClientSize.Height,
+				Dock = DockStyle.Fill
+			};
+
 			// Main Menu
 			_mainMenuScreen = new MainMenuScreen(this) {
 				Width = ClientSize.Width,
@@ -23,29 +36,24 @@ namespace RoguePyra.UI {
 				Dock = DockStyle.Fill
 			};
 			_mainMenuScreen.ExitRequested += (_, __) => Close();
-			_mainMenuScreen.OpenHostList += (_, __) => SwitchScreen(Screen.hostList);
 
 			// Host List
-			_hostListScreen = new HostListScreen() {
+			_hostListScreen = new HostListScreen(this) {
 				Width = ClientSize.Width,
 				Height = ClientSize.Height,
 				Dock = DockStyle.Fill
 			};
-			_hostListScreen.ReturnToMainMenu += (_, __) => SwitchScreen(Screen.mainMenu);
 
 			// Displays main menu as initial screen.
-			SwitchScreen(Screen.mainMenu);
+			SwitchScreen(Screen.Logo);
 		}
 
-		private void SwitchScreen(Screen newScreen) {
+		public void SwitchScreen(Screen newScreen) {
 			Controls.Clear();
 			switch (newScreen) {
-				case Screen.mainMenu:
-					Controls.Add(_mainMenuScreen);
-					return;
-				case Screen.hostList:
-					Controls.Add(_hostListScreen);
-					return;
+				case Screen.Logo: Controls.Add(_logoScreen); return;
+				case Screen.MainMenu: Controls.Add(_mainMenuScreen); return;
+				case Screen.HostList: Controls.Add(_hostListScreen); return;
 				default:
 					// TODO: handle this (should be unreachable, but error just in case).
 					return;
