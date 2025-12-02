@@ -34,17 +34,14 @@ internal sealed class UdpGameHost {
 		public int health = 100;
 
 		public Protocol.KeysMask Keys = Protocol.KeysMask.None; // last input
-		public long LastSeenHostMs;                              // host time (ms)
+		public long LastSeenHostMs;                             // host time (ms)
 	}
 
 	private readonly Dictionary<IPEndPoint, Player> _players = [];
 	private readonly HashSet<IPEndPoint> _knownClients = [];
 
-
 	// Logical player id (name) -> Player (used to seed new host on migration)
-	private readonly Dictionary<string, Player> _playersById =
-		new(StringComparer.OrdinalIgnoreCase);
-
+	private readonly Dictionary<string, Player> _playersById = new(StringComparer.OrdinalIgnoreCase);
 
 	// Maps UDP endpoints to logical player names (from HELLOUDP:<name>)
 	private readonly Dictionary<IPEndPoint, string> _endpointNames = [];
@@ -56,9 +53,9 @@ internal sealed class UdpGameHost {
 	private const float BOX = 24.0f;
 
 	// Lava rises forever; game never ends
-	private float _lavaY;                 // Y of lava surface (0 = top)
+	private float _lavaY;						// Y of lava surface (0 = top)
 	private const float LavaRiseRate = 5.0f;    // px/sec rising speed
-	private const int LavaDPS = 60;    // damage per second when submerged
+	private const int LavaDPS = 60;				// damage per second when submerged
 
 	public UdpGameHost(
 		int udpPort = Protocol.DefaultUdpPort,

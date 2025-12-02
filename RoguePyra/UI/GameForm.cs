@@ -30,10 +30,10 @@ namespace RoguePyra.UI {
 		private string? _followId;
 
 		// Latest snapshot state (raw from UDP)
-		private readonly Dictionary<string, (float x, float y, int hp)> _snapshotEntities = new();
+		private readonly Dictionary<string, (float x, float y, int hp)> _snapshotEntities = [];
 
 		// Smoothed positions used for rendering
-		private readonly Dictionary<string, (float x, float y, int hp)> _viewEntities = new();
+		private readonly Dictionary<string, (float x, float y, int hp)> _viewEntities = [];
 
 		private float _lavaY = WorldH;
 		private volatile bool _hasSnapshot;
@@ -61,11 +61,11 @@ namespace RoguePyra.UI {
 		private readonly TextBox _chatInput;
 		private readonly Button _chatSend;
 		private readonly Panel _topBar;
-		private Button? _btnStart;
-		private Button? _btnLeave;
+		private readonly Button? _btnStart;
+		private readonly Button? _btnLeave;
 		private bool _isReconnecting;
 
-		private readonly List<RectangleF> _platforms = new();
+		private readonly List<RectangleF> _platforms = [];
 		private readonly WinFormsTimer _renderTimer;
 
 		public GameForm(IPAddress hostIp, int udpPort, NetworkManager net, bool isHost, int lobbyId, string? localPlayerId = null) {
@@ -212,9 +212,7 @@ namespace RoguePyra.UI {
 			}
 			_platforms.Sort((a, b) => a.Y.CompareTo(b.Y));
 
-			//
 			// --- Start UDP host if this client is the lobby creator ---
-			//
 			if (_isHost) {
 				try {
 					// Start the authoritative UDP simulation on this machine.
@@ -226,9 +224,7 @@ namespace RoguePyra.UI {
 				}
 			}
 
-			//
 			// --- Start UDP client (all players, including the host) ---
-			//
 			var nameForUdp = _localPlayerName ?? string.Empty;
 			_udpClient = new UdpGameClient(_hostIp, _udpPort, nameForUdp);
 
@@ -275,7 +271,6 @@ namespace RoguePyra.UI {
 					_chatLog.ScrollToCaret();
 				}
 			}));
-
 		}
 
 		private void OnUdpSnapshot() {
@@ -309,7 +304,6 @@ namespace RoguePyra.UI {
 					}
 				}
 
-
 				// 4) Status only – camera movement will now happen in RenderWorld
 				_status.Text = _hasSnapshot
 					? $"Players: {_snapshotEntities.Count} | LavaY: {_lavaY:F0}"
@@ -320,15 +314,11 @@ namespace RoguePyra.UI {
 
 		}
 
-
 		private void OnWinner(string winnerId) {
 			if (!IsHandleCreated) return;
-			BeginInvoke(new Action(() => {
-				MessageBox.Show(this, $"Winner: {winnerId}", "Game Over",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
-			}));
+			BeginInvoke(new Action(() => MessageBox.Show(this, $"Winner: {winnerId}", "Game Over",
+				MessageBoxButtons.OK, MessageBoxIcon.Information)));
 		}
-
 
 		private void HandleHostMigrate(string newHostName, string newHostIpStr, int newUdpPort) {
 			// Try to parse IP
@@ -338,11 +328,10 @@ namespace RoguePyra.UI {
 			}
 
 			bool iAmNewHost = !string.IsNullOrWhiteSpace(_localPlayerName) &&
-							  string.Equals(_localPlayerName, newHostName, StringComparison.OrdinalIgnoreCase);
+				string.Equals(_localPlayerName, newHostName, StringComparison.OrdinalIgnoreCase);
 
 			_isReconnecting = true;
 			_hasSnapshot = false;
-
 
 			// Log in chat/status
 			var infoLine = iAmNewHost
@@ -353,7 +342,6 @@ namespace RoguePyra.UI {
 			_chatLog.SelectionStart = _chatLog.TextLength;
 			_chatLog.ScrollToCaret();
 			_status.Text = infoLine;
-
 
 			// Update our view of the host endpoint
 			_hostIp = newHostIp;
@@ -388,7 +376,6 @@ namespace RoguePyra.UI {
 				}
 			}
 
-
 			// In all cases, create a fresh UDP client that points to the new host endpoint
 			try {
 				var nameForUdp = _localPlayerName ?? string.Empty;
@@ -405,9 +392,6 @@ namespace RoguePyra.UI {
 			}
 		}
 
-
-
-
 		private async System.Threading.Tasks.Task SendChatAsync() {
 			var msg = _chatInput.Text.Trim();
 			if (string.IsNullOrEmpty(msg)) return;
@@ -421,9 +405,7 @@ namespace RoguePyra.UI {
 			}
 		}
 
-
 		// ----------------- Input handling -----------------
-
 		private void OnKeyDown(object? sender, KeyEventArgs e) {
 			bool changed = false;
 			switch (e.KeyCode) {
@@ -435,17 +417,14 @@ namespace RoguePyra.UI {
 				case Keys.Down: _down = true; break;
 				case Keys.D:
 				case Keys.Right: _right = true; break;
-
 				case Keys.Tab:
 					// cycle follow target
 					e.SuppressKeyPress = true;
 					CycleFollowTarget();
 					break;
 			}
-
 			_udpClient.SetKeys(_up, _left, _down, _right);
 		}
-
 		private void OnKeyUp(object? sender, KeyEventArgs e) {
 			bool changed = false;
 			switch (e.KeyCode) {
@@ -458,10 +437,8 @@ namespace RoguePyra.UI {
 				case Keys.D:
 				case Keys.Right: _right = false; break;
 			}
-
 			_udpClient.SetKeys(_up, _left, _down, _right);
 		}
-
 		private void CycleFollowTarget() {
 			if (_viewEntities.Count == 0) return;
 
@@ -477,17 +454,14 @@ namespace RoguePyra.UI {
 		}
 
 		// ----------------- Render -----------------
-
 		protected override void OnPaint(PaintEventArgs e) {
 			base.OnPaint(e);
 			RenderWorld(e.Graphics);
 		}
-
 		private void RenderTick() {
 			if (!IsHandleCreated) return;
 			Invalidate();
 		}
-
 		private void RenderWorld(Graphics g) {
 			g.SmoothingMode = SmoothingMode.AntiAlias;
 
@@ -547,7 +521,6 @@ namespace RoguePyra.UI {
 					}
 				}
 			}
-
 
 			// ----- Camera follow using SMOOTHED positions -----
 			if (_followId != null && _viewEntities.TryGetValue(_followId, out var ft)) {
@@ -622,7 +595,6 @@ namespace RoguePyra.UI {
 		}
 
 		// ----------------- Cleanup -----------------
-
 		private void OnFormClosing(object? sender, FormClosingEventArgs e) {
 			try {
 				_cts.Cancel();
