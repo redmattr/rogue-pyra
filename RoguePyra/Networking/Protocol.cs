@@ -26,8 +26,8 @@ public static class Protocol
     // -------------------------------------------------------------------------
     // Ports
     // -------------------------------------------------------------------------
-    public const int DefaultTcpPort = 5000;
-    public const int DefaultUdpPort = 6000;
+    public const int DefaultTcpPort = 8000;
+    public const int DefaultUdpPort = 80;
 
     // -------------------------------------------------------------------------
     // TCP Commands (Client → Server)  [newline-delimited]

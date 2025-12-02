@@ -1,4 +1,4 @@
-﻿// HostListScreen.cs
+﻿﻿// HostListScreen.cs
 // Connects to the TCP lobby server, lists lobbies, lets you Join or Create.
 // JOIN uses JOIN_INFO <ip> <udpPort> and opens GameScreen without hardcoded IP.
 
@@ -24,6 +24,15 @@ internal class HostListScreen : UserControl {
 	private readonly Button _btnCreate;     // Creates a new lobby, spawning a host process (logical node) on the client's machine, then connects the client to that lobby.
 	private readonly Button _btnMainMenu;	// Returns to main menu.
 	private bool _netOwned = true;
+	private bool _inGame; // Tracks whether this client is in a game (aka GameForm is open).
+	private bool InGame {
+		get => _inGame;
+		set {
+			_inGame = value;
+			_btnJoin.Enabled = !value && _lvLobbies.SelectedItems.Count > 0;
+			_btnCreate.Enabled = !value;
+		}
+	}			
 
 	private readonly ListView _lvLobbies;   // List of lobbies registered with the connected server. Columns: Id, Name, IP, UdpPort, Max, Cur, InProg.
 	private readonly Label _status;         // Displays messages relating to the most recent action.
@@ -53,7 +62,7 @@ internal class HostListScreen : UserControl {
 		_btnRefresh = new Button { Text = "Refresh", Location = new Point(670, 8), Size = new Size(90, 28), Enabled = false };
 		_btnRefresh.Click += (_, __) => RequestLobbyList();
 
-		Controls.AddRange(new Control[] { lblIp, _tbServerIp, lblPort, _tbTcpPort, lblName, _tbPlayerName, _btnConnect, _btnRefresh });
+		Controls.AddRange([lblIp, _tbServerIp, lblPort, _tbTcpPort, lblName, _tbPlayerName, _btnConnect, _btnRefresh]);
 
 		// --- Lobby list ---
 		_lvLobbies = new ListView {
@@ -84,9 +93,9 @@ internal class HostListScreen : UserControl {
 
 		_status = new Label { Text = "Not connected.", AutoSize = true, Location = new Point(468, 413) };
 
-		Controls.AddRange(new Control[] { _btnJoin, _btnCreate, _btnMainMenu, _status });
+		Controls.AddRange([_btnJoin, _btnCreate, _btnMainMenu, _status]);
 
-		_lvLobbies.SelectedIndexChanged += (_, __) => _btnJoin.Enabled = _lvLobbies.SelectedItems.Count > 0;
+		_lvLobbies.SelectedIndexChanged += (_, __) => _btnJoin.Enabled = _lvLobbies.SelectedItems.Count > 0 && !_inGame;
 
 		// --- Direct Connect (IP:Port) ---
 		//_tbDirectIp = new TextBox { Text = "127.0.0.1", Width = 160, Location = new Point(320, 410) };
@@ -95,7 +104,6 @@ internal class HostListScreen : UserControl {
 		//_btnDirectConnect.Click += OnDirectConnectClick;
 
 		//Controls.AddRange(new Control[] { _tbDirectIp, _tbDirectUdp, _btnDirectConnect });
-
 	}
 
 	// Connect to TCP server for lobby/chat over NetworkManager (TCP only here)
@@ -143,7 +151,6 @@ internal class HostListScreen : UserControl {
 			RequestLobbyList();   // keep the list in sync without user pressing Refresh
 			return;
 		}
-
 
 		if (line.StartsWith("ERROR_GAME_STARTED", StringComparison.OrdinalIgnoreCase)) {
 			_status.Text = "Join rejected — that lobby already started.";
@@ -218,6 +225,7 @@ internal class HostListScreen : UserControl {
 						return;
 					}
 
+					InGame = true; // Client now has a GameForm instance open.
 					bool isHost = (_pendingJoinLobbyId == _lastHostedLobbyId);
 					var gf = new GameForm(
 						IPAddress.Parse(ip),
@@ -227,7 +235,7 @@ internal class HostListScreen : UserControl {
 						lobbyId: _pendingJoinLobbyId,
 						localPlayerId: _playerName
 						);
-
+					gf.FormClosed += (_, __) => InGame = false; // Runs when client no longer has a GameForm instance open.
 					_netOwned = false;
 					gf.Show();
 
@@ -274,50 +282,72 @@ internal class HostListScreen : UserControl {
 	private int _lastHostedLobbyId = -1;
 
 	private async void OnCreateClick(object? sender, EventArgs e) {
-		if (_net == null) return;
+    	if (_net == null) return;
 
-		try {
-			using var dlg = new CreateLobbyDialog();
-			if (dlg.ShowDialog(this) != DialogResult.OK)
-				return;
+    	try {
+        	using var dlg = new CreateLobbyDialog();
+        	if (dlg.ShowDialog(this) != DialogResult.OK)
+            	return;
 
-			string name = dlg.LobbyName;
-			int udp = dlg.UdpPort;
-			int max = dlg.MaxPlayers;
+        	string name = dlg.LobbyName;
+        	int udp = dlg.UdpPort;
+        	int max = dlg.MaxPlayers;
 
-			// One-time listener to catch HOST_REGISTERED and store the ID
-			void onHostRegistered(string line) {
-				if (!line.StartsWith("HOST_REGISTERED ", StringComparison.OrdinalIgnoreCase))
-					return;
+        	string lanIp = GetLocalLanIp();
 
-				var idStr = line.Substring("HOST_REGISTERED ".Length).Trim();
-				if (int.TryParse(idStr, out var lobbyId)) {
-					_lastHostedLobbyId = lobbyId;
+        	// One-time listener to catch HOST_REGISTERED and immediately launch GameForm as host
+        	void onHostRegistered(string line) {
+            	if (!line.StartsWith("HOST_REGISTERED ", StringComparison.OrdinalIgnoreCase))
+                	return;
 
-					// stop listening after we captured it
-					_net!.ChatReceived -= onHostRegistered!;
+            	var idStr = line.Substring("HOST_REGISTERED ".Length).Trim();
+            	if (!int.TryParse(idStr, out var lobbyId))
+                	return;
 
-					BeginInvoke(new Action(() => {
-						_status.Text = $"Lobby created (ID {lobbyId}).";
-						RequestLobbyList();
-					}));
-				}
-			}
+            	_lastHostedLobbyId = lobbyId;
 
-			// Hook BEFORE sending the register command
-			_net.ChatReceived += onHostRegistered!;
+            	// stop listening after we captured it
+            	_net!.ChatReceived -= onHostRegistered!;
 
-			string lanIp = GetLocalLanIp();
-			await _net.SendTcpLineAsync($"HOST_REGISTER {name} {udp} {max} {lanIp}");
+            	BeginInvoke(new Action(() => {
+                	_status.Text = $"Lobby created (ID {lobbyId}). Launching game as host…";
 
-			_status.Text = $"Hosting '{name}' on UDP {udp} (LAN {lanIp}). Waiting for confirmation…";
-		} catch (Exception ex) {
-			MessageBox.Show(this,
-				"Disconnected from server. Please reconnect.\n\n" + ex.Message,
-				"Connection Error",
-				MessageBoxButtons.OK,
-				MessageBoxIcon.Error);
-		}
+                	if (_net == null)
+                    	return;
+
+                	// Mark that GameForm now owns the NetworkManager
+                	_netOwned = false;
+
+					// Immediately enter the game as HOST, using our LAN IP + chosen UDP port
+					InGame = true; // Client now has a GameForm instance open.
+					var gf = new GameForm(
+                    	IPAddress.Parse(lanIp),
+                    	udp,
+                    	_net,
+                    	isHost: true,
+                    	lobbyId: lobbyId,
+                    	localPlayerId: _playerName
+                	);
+					gf.FormClosed += (_, __) => InGame = false; // Runs when client no longer has a GameForm instance open.
+					gf.Show();
+                	// Optional: hide this screen's parent form or leave it; GF is its own window.
+                	// FindForm()?.Hide();
+            	}));
+        	}
+
+        	// Hook BEFORE sending the register command
+        	_net.ChatReceived += onHostRegistered!;
+
+        	await _net.SendTcpLineAsync($"HOST_REGISTER {name} {udp} {max} {lanIp}");
+
+        	_status.Text = $"Hosting '{name}' on UDP {udp} (LAN {lanIp}). Waiting for server confirmation…";
+    	} catch (Exception ex) {
+        	MessageBox.Show(this,
+            	"Disconnected from server. Please reconnect.\n\n" + ex.Message,
+            	"Connection Error",
+            	MessageBoxButtons.OK,
+            	MessageBoxIcon.Error);
+    	}
 	}
 
 	protected override void OnHandleDestroyed(EventArgs e) {
@@ -358,7 +388,7 @@ internal class HostListScreen : UserControl {
 			_ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(160, 130) };
 			_cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new Point(240, 130) };
 
-			Controls.AddRange(new Control[] { lbl1, _tbName, lbl2, _tbUdp, lbl3, _tbMax, _ok, _cancel });
+			Controls.AddRange([lbl1, _tbName, lbl2, _tbUdp, lbl3, _tbMax, _ok, _cancel]);
 			AcceptButton = _ok; CancelButton = _cancel;
 		}
 	}
