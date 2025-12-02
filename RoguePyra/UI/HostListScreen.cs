@@ -39,7 +39,7 @@ internal class HostListScreen : UserControl {
 	public HostListScreen() {
 		// --- Top controls (server + player) ---
 		var lblIp = new Label { Text = "Server IP:", AutoSize = true, Location = new Point(12, 14) };
-		_tbServerIp = new TextBox { Text = "127.0.0.1", Width = 120, Location = new Point(80, 10) };
+		_tbServerIp = new TextBox { Text = "74.109.192.95", Width = 120, Location = new Point(80, 10) };
 
 		var lblPort = new Label { Text = "TCP Port:", AutoSize = true, Location = new Point(210, 14) };
 		_tbTcpPort = new TextBox { Text = Protocol.DefaultTcpPort.ToString(CultureInfo.InvariantCulture), Width = 70, Location = new Point(275, 10) };
@@ -274,51 +274,73 @@ internal class HostListScreen : UserControl {
 	private int _lastHostedLobbyId = -1;
 
 	private async void OnCreateClick(object? sender, EventArgs e) {
-		if (_net == null) return;
+    	if (_net == null) return;
 
-		try {
-			using var dlg = new CreateLobbyDialog();
-			if (dlg.ShowDialog(this) != DialogResult.OK)
-				return;
+    	try {
+        	using var dlg = new CreateLobbyDialog();
+        	if (dlg.ShowDialog(this) != DialogResult.OK)
+            	return;
 
-			string name = dlg.LobbyName;
-			int udp = dlg.UdpPort;
-			int max = dlg.MaxPlayers;
+        	string name = dlg.LobbyName;
+        	int udp = dlg.UdpPort;
+        	int max = dlg.MaxPlayers;
 
-			// One-time listener to catch HOST_REGISTERED and store the ID
-			void onHostRegistered(string line) {
-				if (!line.StartsWith("HOST_REGISTERED ", StringComparison.OrdinalIgnoreCase))
-					return;
+        	string lanIp = GetLocalLanIp();
 
-				var idStr = line.Substring("HOST_REGISTERED ".Length).Trim();
-				if (int.TryParse(idStr, out var lobbyId)) {
-					_lastHostedLobbyId = lobbyId;
+        	// One-time listener to catch HOST_REGISTERED and immediately launch GameForm as host
+        	void onHostRegistered(string line) {
+            	if (!line.StartsWith("HOST_REGISTERED ", StringComparison.OrdinalIgnoreCase))
+                	return;
 
-					// stop listening after we captured it
-					_net!.ChatReceived -= onHostRegistered!;
+            	var idStr = line.Substring("HOST_REGISTERED ".Length).Trim();
+            	if (!int.TryParse(idStr, out var lobbyId))
+                	return;
 
-					BeginInvoke(new Action(() => {
-						_status.Text = $"Lobby created (ID {lobbyId}).";
-						RequestLobbyList();
-					}));
-				}
-			}
+            	_lastHostedLobbyId = lobbyId;
 
-			// Hook BEFORE sending the register command
-			_net.ChatReceived += onHostRegistered!;
+            	// stop listening after we captured it
+            	_net!.ChatReceived -= onHostRegistered!;
 
-			string lanIp = GetLocalLanIp();
-			await _net.SendTcpLineAsync($"HOST_REGISTER {name} {udp} {max} {lanIp}");
+            	BeginInvoke(new Action(() => {
+                	_status.Text = $"Lobby created (ID {lobbyId}). Launching game as host…";
 
-			_status.Text = $"Hosting '{name}' on UDP {udp} (LAN {lanIp}). Waiting for confirmation…";
-		} catch (Exception ex) {
-			MessageBox.Show(this,
-				"Disconnected from server. Please reconnect.\n\n" + ex.Message,
-				"Connection Error",
-				MessageBoxButtons.OK,
-				MessageBoxIcon.Error);
-		}
+                	if (_net == null)
+                    	return;
+
+                	// Mark that GameForm now owns the NetworkManager
+                	_netOwned = false;
+
+                	// Immediately enter the game as HOST, using our LAN IP + chosen UDP port
+                	var gf = new GameForm(
+                    	IPAddress.Parse(lanIp),
+                    	udp,
+                    	_net,
+                    	isHost: true,
+                    	lobbyId: lobbyId,
+                    	localPlayerId: _playerName
+                	);
+
+                	gf.Show();
+                	// Optional: hide this screen's parent form or leave it; GF is its own window.
+                	// FindForm()?.Hide();
+            	}));
+        	}
+
+        	// Hook BEFORE sending the register command
+        	_net.ChatReceived += onHostRegistered!;
+
+        	await _net.SendTcpLineAsync($"HOST_REGISTER {name} {udp} {max} {lanIp}");
+
+        	_status.Text = $"Hosting '{name}' on UDP {udp} (LAN {lanIp}). Waiting for server confirmation…";
+    	} catch (Exception ex) {
+        	MessageBox.Show(this,
+            	"Disconnected from server. Please reconnect.\n\n" + ex.Message,
+            	"Connection Error",
+            	MessageBoxButtons.OK,
+            	MessageBoxIcon.Error);
+    	}
 	}
+
 
 	protected override void OnHandleDestroyed(EventArgs e) {
 		try {
